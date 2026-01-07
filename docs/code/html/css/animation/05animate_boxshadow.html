@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Document</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        display: grid;
+        align-items: center;
+        justify-items: center;
+        margin: 0;
+        background-color: #000;
+      }
+      body {
+        margin: 0;
+        color: #fff;
+        background-color: #111;
+        font-family: "Press Start 2P",
+          cursive;
+        overflow: hidden;
+      }
+
+      div {
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background-color: #efefef;
+        /*
+        每个阴影值通常遵循以下语法结构：
+          box-shadow: h-shadow v-shadow blur spread color inset, ...;
+          这里，每个阴影定义可以包含以下部分：
+
+          h-shadow（水平阴影位置）：必需。定义阴影在水平方向上的偏移距离，可以是正数（向右）或负数（向左）。
+          v-shadow（垂直阴影位置）：必需。定义阴影在垂直方向上的偏移距离，可以是正数（向下）或负数（向上）。
+          blur（模糊距离）：可选。定义阴影的模糊程度。
+          spread（阴影尺寸）：可选。控制阴影的大小，正值会使阴影扩大，负值会使阴影收缩。
+          color（阴影颜色）：可选。指定阴影的颜色。
+          inset：可选。关键字，表示阴影是在元素内部投射（默认是在外部）。
+
+          in order: offset-x, offset-y, blur-radius, color 
+            0 0 20px #fff,
+            -20px 0 80px #f0f,
+            20px 0 80px #0ff,
+          same, except these shadows go inwards
+            inset 0 0 50px #fff,
+            inset 50px 0 80px #f0f,
+            inset -50px 0 80px #0ff,
+            inset 50px 0 300px #f0f,
+            inset -50px 0 300px #0ff;
+        */
+        /* in order: offset-x, offset-y, blur-radius, color */
+        box-shadow: 0 0 20px #fff,
+          -20px 0 80px #f0f,
+          20px 0 80px #0ff,
+          /* same, except these shadows go inwards */
+            inset 0 0 50px #fff,
+          inset 50px 0 80px #f0f,
+          inset -50px 0 80px #0ff,
+          inset 50px 0 300px #f0f,
+          inset -50px 0 300px #0ff;
+        animation: pulsate 6s linear
+          infinite;
+      }
+
+      @keyframes pulsate {
+        50% {
+          box-shadow: 0 0 20px #fff,
+            20px 0 80px #f0f,
+            -20px 0 80px #0ff,
+            inset 0 0 50px #fff,
+            inset -50px 0 80px #f0f,
+            inset 50px 0 80px #0ff,
+            inset -50px 0 300px #f0f,
+            inset 50px 0 300px #0ff;
+        }
+      }
+    </style>
+  </head>
+  <body class="body">
+    <div></div>
+  </body>
+  <script></script>
+</html>

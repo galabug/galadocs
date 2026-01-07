@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        /* 元素高度包括边框线 */
+        box-sizing: border-box;
+      }
+
+      @keyframes go {
+        to {
+          text-transform: uppercase; /* end */
+        }
+      }
+      @keyframes back {
+        to {
+          text-transform: lowercase; /* start */
+        }
+      }
+      .goAnimate {
+        /* linear 恒定速度 */
+        /* forwards 当动画完成后，元素将停留在动画序列的最后一个关键帧的位置 */
+        animation: go 1s linear forwards;
+      }
+      .backAnimate {
+        /* linear 恒定速度 */
+        /* forwards 当动画完成后，元素将停留在动画序列的最后一个关键帧的位置 */
+        animation: back 1s linear forwards;
+      }
+
+      [id='subject'] {
+        display: grid;
+        text-transform: lowercase; /* start */
+        align-items: center;
+        justify-items: center;
+        z-index: 1;
+        width: 120px;
+        height: 80px;
+        border: 2px solid #ced4da;
+        color: #495057;
+        cursor: pointer;
+      }
+
+      .body {
+        min-width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+      .console {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body class="body">
+    <div id="subject" onclick="clickTostart()">click me!</div>
+    <div id="consoleDiv" class="console">console</div>
+  </body>
+  <script>
+    /**
+     * 该属性的值无法进行有意义的组合，因此它不是可加的，并且插值以 50%（p=0.5）从 V a交换到 V b ...
+     *
+     */
+    document.addEventListener('DOMContentLoaded', function () {
+      const target = document.querySelector('#subject')
+
+      target.addEventListener('animationend', function (event) {
+        if (event.animationName === 'go') {
+          const computedStyle = window.getComputedStyle(target)
+          const textTransform = computedStyle.getPropertyValue('text-transform')
+          console.log('动画结束时的 text-transform:', textTransform)
+          document.querySelector('#consoleDiv').textContent = `当前text-transform : ${textTransform.toUpperCase()}`
+        }
+      })
+    })
+    function clickTostart() {
+      console.log('clickTostart', document.getElementById('subject').className)
+      document.getElementById('subject').className = ''
+      setTimeout(() => {
+        document.getElementById('subject').className = 'goAnimate'
+        const target = document.querySelector('#subject')
+
+        const textTransform = window.getComputedStyle(target).getPropertyValue('text-transform')
+        document.querySelector('#consoleDiv').textContent = `当前text-transform : ${textTransform}`
+      }, 20)
+    }
+
+    function initListener() {
+      // setTimeout(() => {
+      //   const textTransform = window.getComputedStyle(target).getPropertyValue('text-transform')
+      //   heightDisplay.textContent = `当前text-transform : ${textTransform} `
+      // }, 1200)
+      // if ('ResizeObserver' in window) {
+      //   const observer = new ResizeObserver((entries) => {
+      //     for (let entry of entries) {
+      //       heightDisplay.textContent = `当前高度: ${entry.target.offsetHeight}px`
+      //     }
+      //   })
+      //   observer.observe(target)
+      // } else {
+      //   console.error('ResizeObserver 不被支持')
+      //   // 这里可以添加回退方案，比如使用MutationObserver或者定时检查尺寸
+      // }
+      // 创建一个MutationObserver实例
+      // const observer = new MutationObserver(function (mutationsList) {
+      //   for (let mutation of mutationsList) {
+      //     // 检查是否是属性值的改变，并且是z-index的改变
+      //     if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+      //       const textTransform = window.getComputedStyle(target).getPropertyValue('text-transform')
+      //       heightDisplay.textContent = `当前text-transform : ${textTransform} `
+      //     }
+      //   }
+      // })
+      // // 配置observer，监视style属性的变化
+      // const config = { attributes: true, attributeFilter: ['style'] }
+      // observer.observe(target, config)
+    }
+  </script>
+</html>

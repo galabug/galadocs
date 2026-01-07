@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        color: #fff;
+        background-color: #111;
+        font-family: 'Press Start 2P', cursive;
+        overflow: hidden;
+      }
+      .boo-center {
+        display: grid;
+        align-items: center;
+        justify-items: center;
+        height: 100%;
+      }
+
+      @keyframes move {
+        from {
+          z-index: 1; /* animate from behind everything... */
+          transform: translate(-60px, -60px) scale(0.5);
+        }
+        to {
+          z-index: 6; /* ...to in front of everything */
+          transform: translate(60px, 10px) scale(1);
+        }
+      }
+
+      .boo-move {
+        position: relative; /* for iOS */
+        /* ease-in-out: 动画在开始和结束时速度较慢，中间过程较快，创造出平滑的加速和减速效果。
+          infinite: 表示动画的循环次数。infinite 意味着动画将无限次重复播放。
+          alternate: 指定了动画的播放方向。
+                    动画会在奇数次迭代时正向播放（按照定义的顺序），
+                    在偶数次迭代时反向播放，
+                    然后再次正向播放，以此类推，营造出来回往复的效果。 */
+        animation: move 6s ease-in-out infinite alternate;
+      }
+
+      @keyframes bob {
+        from {
+          transform: translateY(-40px);
+        }
+        to {
+          transform: translateY(10px);
+        }
+      }
+
+      .boo {
+        width: min(70vw, 400px); /* scales down on smaller screens */
+        animation: bob 0.8s ease-in-out infinite alternate;
+      }
+
+      h1 {
+        position: absolute;
+        z-index: 5;
+        top: calc(50% - 200px); /* fixed distance above walls */
+        left: 0;
+        right: 0;
+        margin: 0;
+        padding: 0 10px;
+        font-size: 3.25rem;
+        text-align: center;
+        text-transform: uppercase;
+        text-shadow: 4px 4px 0 #111;
+      }
+
+      .wall {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* 
+        filter: 这是一个CSS属性，用于应用视觉效果（例如模糊、锐化或颜色变换）到元素的渲染。
+          blur(3px): 这是滤镜功能的一个特定值，用于定义模糊效果的程度。blur 函数接受一个长度值作为参数，用来设定模糊半径。在这个例子中，3px 表示元素将被模糊3像素的宽度。数值越大，模糊效果越强烈；数值越小，模糊效果越轻微。
+          应用这个样式后，元素的外观会看起来像是聚焦不准或是被一层薄雾覆盖，增加了页面的视觉效果，常用于创建诸如背景虚化、按钮 hover 效果或是图片艺术处理等场景。 */
+        filter: blur(3px);
+        /* 开启gpu渲染 */
+        transform: translate3d(0, 0, 0); /* prevents blur from disappearing in Safari */
+      }
+
+      .wall-1 {
+        z-index: 1;
+        top: calc(50% - 60px);
+        background-color: #261b33;
+      }
+
+      .wall-2 {
+        z-index: 2;
+        top: calc(50% - 40px);
+        background-color: #372c45;
+      }
+
+      .wall-3 {
+        z-index: 3;
+        top: calc(50% - 10px);
+        background-color: #493d58;
+      }
+
+      .wall-4 {
+        z-index: 4;
+        top: calc(50% + 30px);
+        background-color: #5d506b;
+      }
+
+      .wall-5 {
+        z-index: 5;
+        top: calc(50% + 80px);
+        background-color: #70637f;
+      }
+    </style>
+  </head>
+  <body class="body">
+    <div class="boo-center">
+      <div class="boo-move">
+        <img class="boo" src="./images/big-boo.png" alt="Big Boo" />
+      </div>
+    </div>
+
+    <h1>Spooky Boo!</h1>
+
+    <div class="wall wall-1"></div>
+    <div class="wall wall-2"></div>
+    <div class="wall wall-3"></div>
+    <div class="wall wall-4"></div>
+    <div class="wall wall-5"></div>
+  </body>
+  <script></script>
+</html>

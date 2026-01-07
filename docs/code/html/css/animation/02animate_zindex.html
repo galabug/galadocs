@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        /* 元素高度包括边框线 */
+        box-sizing: border-box;
+      }
+
+      @keyframes go {
+        to {
+          z-index: 10;
+        }
+      }
+      @keyframes back {
+        to {
+          z-index: 1;
+        }
+      }
+      .goAnimate {
+        /* linear 恒定速度 */
+        /* forwards 当动画完成后，元素将停留在动画序列的最后一个关键帧的位置 */
+        animation: go 1s linear forwards;
+      }
+      .backAnimate {
+        /* linear 恒定速度 */
+        /* forwards 当动画完成后，元素将停留在动画序列的最后一个关键帧的位置 */
+        animation: back 1s linear forwards;
+      }
+
+      [id='subject'] {
+        display: grid;
+        align-items: center;
+        justify-items: center;
+        z-index: 1;
+        width: 80px;
+        height: 80px;
+        border: 2px solid #ced4da;
+        color: #495057;
+        cursor: pointer;
+      }
+
+      .body {
+        min-width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .console {
+        margin-left: 16px;
+      }
+    </style>
+  </head>
+  <body class="body">
+    <div id="subject" onclick="clickTostart()">click me!</div>
+    <div id="consoleDiv" class="console">console</div>
+  </body>
+  <script>
+    // document.addEventListener('DOMContentLoaded', function () {
+    //   initListener()
+    // })
+
+    function clickTostart() {
+      document.getElementById('subject').className = ''
+      setTimeout(() => {
+        document.getElementById('subject').className = 'goAnimate'
+        initListener()
+      }, 20)
+    }
+
+    function initListener() {
+      const target = document.querySelector('#subject')
+      const heightDisplay = document.querySelector('#consoleDiv')
+      let currentZIndex = window.getComputedStyle(target).getPropertyValue('z-index')
+      const animationDuration = 2000 // 动画持续时间，单位毫秒
+
+      const start = performance.now()
+      function animateZIndex() {
+        const elapsed = performance.now() - start
+        if (elapsed < animationDuration) {
+          const newZIndex = window.getComputedStyle(target).getPropertyValue('z-index')
+          if (newZIndex !== currentZIndex) {
+            // console.log('z-index 变化为:', newZIndex);
+            heightDisplay.textContent = `当前z-index : ${newZIndex}`
+            currentZIndex = newZIndex
+          }
+          // 在下一次重绘之前调用一个指定的函数
+          requestAnimationFrame(animateZIndex)
+        } else {
+          // 动画结束，可以在这里处理结束逻辑
+        }
+      }
+      // 开始动画
+      animateZIndex()
+
+      // if ('ResizeObserver' in window) {
+      //   const observer = new ResizeObserver((entries) => {
+      //     for (let entry of entries) {
+      //       heightDisplay.textContent = `当前高度: ${entry.target.offsetHeight}px`
+      //     }
+      //   })
+      //   observer.observe(target)
+      // } else {
+      //   console.error('ResizeObserver 不被支持')
+      //   // 这里可以添加回退方案，比如使用MutationObserver或者定时检查尺寸
+      // }
+
+      // 创建一个MutationObserver实例
+      // const observer = new MutationObserver(function (mutationsList) {
+      //   for (let mutation of mutationsList) {
+      //     console.warn(mutation)
+      //     // 检查是否是属性值的改变，并且是z-index的改变
+      //     if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+      //       const zIndex = window.getComputedStyle(target).getPropertyValue('z-index')
+      //       heightDisplay.textContent = `当前z-index : ${zIndex}px`
+      //     }
+      //   }
+      // })
+
+      // // 配置observer，监视style属性的变化
+      // const config = { attributes: true, attributeFilter: ['style'] }
+      // observer.observe(target, config)
+    }
+  </script>
+</html>

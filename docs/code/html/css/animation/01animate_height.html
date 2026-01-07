@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        /* 元素高度包括边框线 */
+        box-sizing: border-box;
+      }
+
+      @keyframes go {
+        from {
+          height: 80px;
+        }
+        to {
+          height: 160px;
+        }
+      }
+      @keyframes back {
+        from {
+          height: 160px;
+        }
+        to {
+          height: 80px;
+        }
+      }
+      .goAnimate {
+        /* linear 恒定速度 */
+        /* forwards 当动画完成后，元素将停留在动画序列的最后一个关键帧的位置 */
+        animation: go 1s linear forwards;
+      }
+      .backAnimate {
+        animation: back 1s linear forwards;
+      }
+
+      [id='subject'] {
+        display: grid;
+        align-items: center;
+        justify-items: center;
+        width: 80px;
+        height: 80px;
+        border: 2px solid #ced4da;
+        color: #495057;
+        cursor: pointer;
+      }
+
+      .body {
+        min-width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .console {
+        margin-left: 16px;
+      }
+    </style>
+  </head>
+  <body class="body">
+    <div id="subject" onclick="clickTostart()">click me!</div>
+    <div id="consoleDiv" class="console"></div>
+  </body>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initListener()
+    })
+
+    function clickTostart() {
+      console.log('clickTostart', document.getElementById('subject').className)
+      if (document.getElementById('subject').className == 'goAnimate') {
+        document.getElementById('subject').className = 'backAnimate '
+      } else {
+        document.getElementById('subject').className = 'goAnimate'
+      }
+    }
+
+    function initListener() {
+      const target = document.querySelector('#subject')
+      const heightDisplay = document.querySelector('#consoleDiv')
+
+      if ('ResizeObserver' in window) {
+        const observer = new ResizeObserver((entries) => {
+          for (let entry of entries) {
+            heightDisplay.textContent = `当前高度: ${entry.target.offsetHeight}px`
+          }
+        })
+        observer.observe(target)
+      } else {
+        console.error('ResizeObserver 不被支持')
+        // 这里可以添加回退方案，比如使用MutationObserver或者定时检查尺寸
+      }
+    }
+  </script>
+</html>
