@@ -17,6 +17,8 @@
 }
 ```
 
+https://vscode.download.prss.microsoft.com/dbazure/download/stable/258e40fedc6cb8edf399a463ce3a9d32e7e1f6f3/VSCode-win32-x64-1.100.3.zip
+
 使用例子
 已知
 https://vscode.download.prss.microsoft.com/dbazure/download/stable/6261075646f055b99068d3688932416f2346dd3b/VSCodeUserSetup-x64-1.73.1.exe
