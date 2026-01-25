@@ -1,7 +1,3 @@
-# react
-
-# ts
-
 # Claude Code
 
 ## Claude Code 超详细完整指南（2025）
