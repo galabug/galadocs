@@ -1,0 +1,54 @@
+plugin install oh-my-opencode
+Thinking: 用户想要安装一个名为 "oh-my-opencode" 的插件。让我先搜索一下这个插件是否存在于 opencode 的生态系统中。
+让我先查看 opencode 的文档或者搜索一下这个插件。
+◈ Exa Web Search "oh-my-opencode opencode plugin install" 
+Thinking: 看起来 "oh-my-opencode" 是一个真实存在的 OpenCode 插件。根据搜索结果，这是一个将 OpenCode 转换成更强大的 agent 工具的插件。
+根据官方文档，安装方法有以下几种：
+1. 推荐方法: bunx oh-my-opencode install
+2. npm: npm install -g oh-my-opencode
+3. bun: bun install -g oh-my-opencode
+4. yarn: yarn global add oh-my-opencode
+5. pnpm: pnpm add -g oh-my-opencode
+用户要求安装这个插件。我可以尝试使用 npm 或者 bun 来安装。
+% WebFetch https://ohmyopencode.com/installation/
+Thinking: 好的，我看到了完整的安装说明。oh-my-opencode 是一个 OpenCode 的插件，可以将 OpenCode 变成一个更强大的 agent 工具。
+根据安装说明，推荐的安装方式是：
+1. 使用 bunx: bunx oh-my-opencode install（推荐）
+2. 或者使用 npm: npm install -g oh-my-opencode
+3. 或者使用 bun: bun install -g oh-my-opencode
+我应该尝试使用 bunx 或 npm 来安装。让我先检查一下系统上是否有 bun 可用。
+# Check for bun or npm availability
+$ which bun || which npm
+bun not found
+/usr/local/bin/npm
+Thinking: 好的，系统上有 npm 但没有 bun。我将使用 npm 来全局安装 oh-my-opencode。
+# Install oh-my-opencode globally
+$ npm install -g oh-my-opencode
+npm verbose cli /usr/local/bin/node /usr/local/bin/npm
+npm info using npm@10.9.2
+npm info using node@v22.17.0
+npm verbose title npm install oh-my-opencode
+npm verbose argv "install" "--global" "oh-my-opencode"
+npm verbose logfile logs-max:10 dir:/Users/zhulijian/.npm/_logs/2026-02-06T01_16_43_792Z-
+npm verbose logfile /Users/zhulijian/.npm/_logs/2026-02-06T01_16_43_792Z-debug-0.log
+npm http fetch GET 200 https://registry.npmmirror.com/oh-my-opencode 389ms (cache miss)
+npm http fetch GET 200 https://registry.npmmirror.com/@ast-grep%2fcli 228ms (cache miss)
+npm http fetch GET 200 https://registry.npmmirror.com/@code-yeongyu%2fcomment-checker 293ms (cache miss)
+…
+Click to expand
+Thinking: 成功安装了 oh-my-opencode 插件。现在让我验证安装是否成功，并给用户一个总结。
+✅ oh-my-opencode 安装成功！
+已全局安装 oh-my-opencode v3.2.3。这是一个 OpenCode 插件，提供：
+- Sisyphus Agent - 智能任务规划和执行
+- Context7 MCP - 获取最新库文档
+- grep.app MCP - 快速搜索 GitHub 代码
+使用方法：
+# 在项目目录中启动 opencode，oh-my-opencode 会自动加载
+cd your-project
+opencode
+配置位置：
+- 项目级：.opencode/oh-my-opencode.json
+- 用户级：~/.config/opencode/oh-my-opencode.json
+验证安装：
+opencode --version
+插件已就绪，下次启动 opencode 时即可使用 oh-my-opencode 的所有功能！
