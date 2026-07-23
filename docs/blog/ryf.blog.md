@@ -1,0 +1,11 @@
+[开源的 Mac 录屏应用，可以绕过录屏检测机制，让被录制的应用无法感知正在被录屏。](https://github.com/jrainlau/himi-recorder)
+[帮助小朋友练习英语口语和听力的桌面应用，完全免费，目前仅支持 macOS。](https://github.com/xiaochong/hi-kid)
+[]()
+[]()
+[]()
+[]()
+[]()
+[]()
+[]()
+[]()
+
