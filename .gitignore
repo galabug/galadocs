@@ -4,6 +4,9 @@ cache
 .vscode
 backup
 * copy.*
+outputs
+.build
+tools
 
 # Logs
 logs
