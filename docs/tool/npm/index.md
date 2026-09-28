@@ -13,8 +13,8 @@
 - 安装指定 镜像源
 
 ```bash
-  npm i --registry=http://devops.hzbtest:38081/repository/hzbank-npm-group-public
-  npm i --registry=https://registry.npmmirror.com
+  npm i --registry=http://devops.hzbtest:38081/repository/hzbank-npm-group-public --no-audit
+  npm i --registry=https://registry.npmmirror.com --no-audit
 ```
 
 - 打印详细日志
