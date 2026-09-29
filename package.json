@@ -17,7 +17,11 @@
     "format": "prettier --write src/",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "review:demo": "python3 scripts/market_review/collect.py --demo",
+    "review:collect": "python3 scripts/market_review/run.py",
+    "review:test": "python3 -m unittest discover -s scripts/market_review -p \"test_*.py\"",
+    "review:sources": "python3 scripts/market_review/run.py --check-sources"
   },
   "dependencies": {
     "pinia": "^3.0.3",

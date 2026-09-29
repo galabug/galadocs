@@ -44,3 +44,15 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# Local market review data and secrets
+/data/
+/public/data/review.json
+.env
+.env.*
+!.env.example
+__pycache__/
+
+.venv-review/
+
+/public/data/sources.json
