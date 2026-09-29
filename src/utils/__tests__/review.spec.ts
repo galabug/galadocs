@@ -9,7 +9,7 @@ const row = {
   upPremium: null,
   consecutivePremium: -1.25,
   highest: 4,
-  lowest: 2,
+  secondHighest: 2,
   upSamples: 0,
   consecutiveSamples: 3,
   upExcluded: 1,
@@ -33,7 +33,9 @@ describe('review data', () => {
     expect(() => parseReview({ ...data, rows: [row, row] })).toThrow()
     expect(() => parseReview({ ...data, rows: [{ ...row, upPremium: NaN }] })).toThrow()
     expect(() => parseReview({ ...data, rows: [{ ...row, consecutive: 0 }] })).toThrow()
-    expect(() => parseReview({ ...data, rows: [{ ...row, lowest: 1 }] })).toThrow()
+    expect(() => parseReview({ ...data, rows: [{ ...row, secondHighest: 1 }] })).toThrow()
+    expect(parseReview({ ...data, rows: [{ ...row, secondHighest: 4 }] }).rows[0]?.secondHighest).toBe(4)
+    expect(() => parseReview({ ...data, rows: [{ ...row, secondHighest: 5 }] })).toThrow()
   })
   it('sorts history and rejects unknown provenance', () => {
     expect(

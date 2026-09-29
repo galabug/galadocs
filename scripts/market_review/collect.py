@@ -62,6 +62,7 @@ def summarize(day, previous, current):
         'upPremium': up_premium, 'consecutivePremium': streak_premium,
         'highest': max(heights) if heights else None,
         'lowest': min(heights) if heights else None,
+        'secondHighest': sorted(heights, reverse=True)[1] if len(heights) > 1 else None,
         'upSamples': up_samples, 'consecutiveSamples': streak_samples,
         'upExcluded': up_excluded, 'consecutiveExcluded': streak_excluded,
         'poolSource': current.get('poolSource', 'tushare'),
@@ -197,6 +198,7 @@ def demo_rows():
                      'upPremium': round(1.1 + wave / 9 + rng.uniform(-1.3, 1.3), 2),
                      'consecutivePremium': round(1.5 + wave / 7 + rng.uniform(-1.5, 1.5), 2),
                      'highest': max(3, round(6 + wave / 9)), 'lowest': 2,
+                     'secondHighest': max(3, round(6 + wave / 9)) - 1,
                      'upSamples': prior['limitUp'], 'consecutiveSamples': prior['consecutive'],
                      'upExcluded': 0, 'consecutiveExcluded': 0})
     return rows

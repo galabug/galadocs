@@ -9,7 +9,7 @@ export interface ReviewDay {
   upPremium: number | null
   consecutivePremium: number | null
   highest: number | null
-  lowest: number | null
+  secondHighest: number | null
   upSamples: number
   consecutiveSamples: number
   upExcluded: number

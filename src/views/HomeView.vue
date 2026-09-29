@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import ReviewChart from '@/components/review/ReviewChart.vue'
+import ReviewOverview from '@/components/review/ReviewOverview.vue'
 import { formatValue, parseReview, parseSourceHealth, sourceLabel } from '@/utils/review'
-import type { ChartSeries, Metric, ReviewData, ReviewDay, SourceHealth } from '@/types/review'
+import type { Metric, ReviewData, ReviewDay, SourceHealth } from '@/types/review'
 
 const data = ref<ReviewData | null>(null)
 const source = ref<ReviewData['source']>('free')
@@ -16,42 +16,22 @@ const notice = ref('')
 const showGuide = ref(false)
 const section = ref('overview')
 const rows = computed(() => (data.value?.rows ?? []).slice(-windowSize.value))
-const selected = computed(
-  () => rows.value.find((r) => r.date === selectedDate.value) ?? rows.value[rows.value.length - 1],
-)
+const selected = computed(() => rows.value.find((r) => r.date === selectedDate.value) ?? rows.value[rows.value.length - 1])
 const previous = computed(() => {
   const all = data.value?.rows ?? []
   return all[all.findIndex((r) => r.date === selected.value?.date) - 1]
 })
 const dateLabel = computed(() => selected.value?.date.replace(/-/g, '.') ?? '等待数据')
-const counts: ChartSeries[] = [
-  { key: 'limitUp', label: '涨停家数', color: '#ff6a7a', type: 'bar' },
-  { key: 'limitDown', label: '跌停家数', color: '#40cba2', type: 'bar' },
-]
-const streaks: ChartSeries[] = [
-  { key: 'consecutive', label: '连板家数', color: '#7896ff', type: 'area' },
-]
-const premiums: ChartSeries[] = [
-  { key: 'upPremium', label: '昨日涨停溢价', color: '#ffb86c', type: 'line' },
-  { key: 'consecutivePremium', label: '昨日连板溢价', color: '#a694ff', type: 'line' },
-]
-const heights: ChartSeries[] = [
-  { key: 'highest', label: '最高连板', color: '#7896ff', type: 'line' },
-  { key: 'lowest', label: '最低连板', color: '#40cba2', type: 'line' },
-]
 const cards = [
   { key: 'limitUp', label: '涨停家数', unit: '家', color: 'red', tag: 'UP' },
   { key: 'limitDown', label: '跌停家数', unit: '家', color: 'green', tag: 'DOWN' },
   { key: 'consecutive', label: '连板家数', unit: '家', color: 'blue', tag: 'STREAK' },
   { key: 'upPremium', label: '昨日涨停溢价', unit: '', color: 'amber', tag: 'RETURN' },
   { key: 'consecutivePremium', label: '昨日连板溢价', unit: '', color: 'purple', tag: 'RETURN' },
-  { key: 'highest', label: '最高 / 最低连板', unit: '板', color: 'blue', tag: 'HEIGHT' },
+  { key: 'highest', label: '最高 / 次高连板', unit: '板', color: 'blue', tag: 'HEIGHT' },
 ] as const
 
-async function load(
-  nextSource: 'demo' | 'live' = source.value === 'demo' ? 'demo' : 'live',
-  allowDemoFallback = false,
-) {
+async function load(nextSource: 'demo' | 'live' = source.value === 'demo' ? 'demo' : 'live', allowDemoFallback = false) {
   loading.value = true
   error.value = ''
   notice.value = ''
@@ -61,32 +41,19 @@ async function load(
       cache: 'no-store',
     })
     if (!response.ok || !response.headers.get('content-type')?.includes('json')) {
-      if (
-        allowDemoFallback &&
-        (response.status === 404 ||
-          (response.ok && response.headers.get('content-type')?.includes('text/html')))
-      ) {
+      if (allowDemoFallback && (response.status === 404 || (response.ok && response.headers.get('content-type')?.includes('text/html')))) {
         await load('demo')
-        notice.value =
-          '尚未生成真实数据，当前为示例。运行 npm run review:collect 即可免费采集，无需账号。'
+        notice.value = '尚未生成真实数据，当前为示例。运行 npm run review:collect 即可免费采集，无需账号。'
         return
       }
-      throw new Error(
-        nextSource !== 'demo'
-          ? '尚无真实数据。请运行 npm run review:collect，默认使用免费数据源，无需账号。'
-          : '示例数据读取失败，请运行 npm run review:demo。',
-      )
+      throw new Error(nextSource !== 'demo' ? '尚无真实数据。请运行 npm run review:collect，默认使用免费数据源，无需账号。' : '示例数据读取失败，请运行 npm run review:demo。')
     }
     const result = parseReview(await response.json())
-    if ((result.source === 'demo') !== (nextSource === 'demo'))
-      throw new Error('数据来源标识不匹配，已停止加载。')
+    if ((result.source === 'demo') !== (nextSource === 'demo')) throw new Error('数据来源标识不匹配，已停止加载。')
     data.value = result
     source.value = result.source
     selectedDate.value = result.rows[result.rows.length - 1]!.date
-    notice.value =
-      nextSource === 'demo'
-        ? '已读取 40 日模拟数据；日期与指标仅用于界面演示。'
-        : `已读取 ${result.rows.length} 个真实交易日。${result.notice ?? '网页刷新不会触发后台采集。'}`
+    notice.value = nextSource === 'demo' ? '已读取 40 日模拟数据；日期与指标仅用于界面演示。' : `已读取 ${result.rows.length} 个真实交易日。${result.notice ?? '网页刷新不会触发后台采集。'}`
     if (result.sources) sourceHealth.value = parseSourceHealth(result.sources)
     await loadSourceHealth()
   } catch (e) {
@@ -97,8 +64,7 @@ async function load(
 }
 function changeWindow(value: number) {
   windowSize.value = value
-  if (!rows.value.some((row) => row.date === selectedDate.value))
-    selectedDate.value = rows.value[rows.value.length - 1]?.date ?? ''
+  if (!rows.value.some((row) => row.date === selectedDate.value)) selectedDate.value = rows.value[rows.value.length - 1]?.date ?? ''
 }
 function delta(key: Metric) {
   const current = selected.value?.[key]
@@ -129,40 +95,9 @@ function sparkline(key: Metric) {
 }
 function exportCsv() {
   if (!rows.value.length) return
-  const header = [
-    '日期',
-    '涨停家数',
-    '跌停家数',
-    '连板家数',
-    '昨日涨停溢价(%)',
-    '昨日连板溢价(%)',
-    '最高连板',
-    '最低连板',
-    '涨停溢价有效样本',
-    '连板溢价有效样本',
-    '涨停溢价剔除样本',
-    '连板溢价剔除样本',
-  ]
-  const keys: (keyof ReviewDay)[] = [
-    'date',
-    'limitUp',
-    'limitDown',
-    'consecutive',
-    'upPremium',
-    'consecutivePremium',
-    'highest',
-    'lowest',
-    'upSamples',
-    'consecutiveSamples',
-    'upExcluded',
-    'consecutiveExcluded',
-  ]
-  const csv =
-    '\uFEFF' +
-    [
-      header.join(','),
-      ...rows.value.map((row) => keys.map((key) => row[key] ?? '').join(',')),
-    ].join('\r\n')
+  const header = ['日期', '涨停家数', '跌停家数', '连板家数', '昨日涨停溢价(%)', '昨日连板溢价(%)', '最高连板', '次高连板', '涨停溢价有效样本', '连板溢价有效样本', '涨停溢价剔除样本', '连板溢价剔除样本']
+  const keys: (keyof ReviewDay)[] = ['date', 'limitUp', 'limitDown', 'consecutive', 'upPremium', 'consecutivePremium', 'highest', 'secondHighest', 'upSamples', 'consecutiveSamples', 'upExcluded', 'consecutiveExcluded']
+  const csv = '\uFEFF' + [header.join(','), ...rows.value.map((row) => keys.map((key) => row[key] ?? '').join(','))].join('\r\n')
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
   const a = document.createElement('a')
   a.href = url
@@ -204,15 +139,9 @@ onMounted(async () => {
       >
       <div class="workspace-label">研究工作台</div>
       <nav aria-label="主导航">
-        <button :class="{ active: section === 'overview' }" @click="navigate('overview')">
-          <span>◫</span>市场复盘 <b>01</b>
-        </button>
-        <button :class="{ active: section === 'history' }" @click="navigate('history')">
-          <span>▤</span>历史数据
-        </button>
-        <button :class="{ active: section === 'method' }" @click="navigate('method')">
-          <span>⌘</span>指标口径
-        </button>
+        <button :class="{ active: section === 'overview' }" @click="navigate('overview')"><span>◫</span>市场复盘 <b>01</b></button>
+        <button :class="{ active: section === 'history' }" @click="navigate('history')"><span>▤</span>历史数据</button>
+        <button :class="{ active: section === 'method' }" @click="navigate('method')"><span>⌘</span>指标口径</button>
         <button @click="showGuide = !showGuide"><span>⚙</span>采集配置</button>
       </nav>
       <div class="sidebar-bottom">
@@ -227,10 +156,7 @@ onMounted(async () => {
     <div class="main-shell">
       <header class="topbar">
         <div><span class="crumb">工作台</span><span class="separator">/</span>市场复盘</div>
-        <div class="topbar-right">
-          <span class="status-dot"></span>盘后研究<span class="divider"></span
-          ><span class="avatar small">研</span>
-        </div>
+        <div class="topbar-right"><span class="status-dot"></span>盘后研究<span class="divider"></span><span class="avatar small">研</span></div>
       </header>
       <main id="overview">
         <div class="page-heading">
@@ -240,38 +166,19 @@ onMounted(async () => {
             <p>从涨跌停、连板与次日溢价，回看市场情绪的变化。</p>
           </div>
           <div class="heading-actions">
-            <button class="secondary" @click="showGuide = !showGuide">⚙ 采集配置</button
-            ><button class="primary" :disabled="loading" @click="load()">
-              <span>↻</span> {{ loading ? '读取中…' : '刷新数据' }}
-            </button>
+            <button class="secondary" @click="showGuide = !showGuide">⚙ 采集配置</button><button class="primary" :disabled="loading" @click="load()"><span>↻</span> {{ loading ? '读取中…' : '刷新数据' }}</button>
           </div>
         </div>
 
         <div class="source-banner" :class="{ live: source !== 'demo' && !!data }">
           <span class="source-icon">{{ source === 'demo' ? '◈' : '✓' }}</span>
           <div>
-            <strong>{{
-              !data
-                ? '等待数据'
-                : source === 'demo'
-                  ? '示例模式'
-                  : source === 'free'
-                    ? '真实采集数据 · 无需账号'
-                    : '真实采集数据'
-            }}</strong
-            ><span>{{
-              source === 'demo'
-                ? '当前为模拟数据，仅演示指标和图表，不代表真实行情。'
-                : `来源：${sourceLabel(selected?.poolSource ?? source)} · 最后采集 ${data?.generatedAt}`
-            }}</span>
+            <strong>{{ !data ? '等待数据' : source === 'demo' ? '示例模式' : source === 'free' ? '真实采集数据 · 无需账号' : '真实采集数据' }}</strong
+            ><span>{{ source === 'demo' ? '当前为模拟数据，仅演示指标和图表，不代表真实行情。' : `来源：${sourceLabel(selected?.poolSource ?? source)} · 最后采集 ${data?.generatedAt}` }}</span>
           </div>
-          <button :disabled="loading" @click="load(source === 'demo' ? 'live' : 'demo')">
-            {{ source === 'demo' ? '读取真实数据' : '切换示例' }} <span>→</span>
-          </button>
+          <button :disabled="loading" @click="load(source === 'demo' ? 'live' : 'demo')">{{ source === 'demo' ? '读取真实数据' : '切换示例' }} <span>→</span></button>
         </div>
-        <p v-if="error" role="alert" class="error">
-          {{ error }}<button @click="showGuide = true">查看配置步骤 →</button>
-        </p>
+        <p v-if="error" role="alert" class="error">{{ error }}<button @click="showGuide = true">查看配置步骤 →</button></p>
         <p v-if="notice" role="status" class="notice">{{ notice }}</p>
 
         <section v-if="showGuide" class="guide">
@@ -280,54 +187,29 @@ onMounted(async () => {
             <button class="secondary" @click="showGuide = false">收起</button>
           </div>
           <ol>
-            <li>
-              <b>免费采集</b><code>npm run review:collect</code
-              ><span>默认 BaoStock 主源、东方财富近期备用，无需 Token。</span>
-            </li>
-            <li>
-              <b>检查备用来源</b><code>npm run review:sources</code
-              ><span>检测 BaoStock、东方财富、腾讯、新浪，结果显示在页面。</span>
-            </li>
-            <li>
-              <b>每天更新</b><code>每天 18:30 · 北京时间</code
-              ><span>定时任务在 Codex 或系统调度器中管理；页面本身不执行采集。</span>
-            </li>
+            <li><b>免费采集</b><code>npm run review:collect</code><span>默认 BaoStock 主源、东方财富近期备用，无需 Token。</span></li>
+            <li><b>检查备用来源</b><code>npm run review:sources</code><span>检测 BaoStock、东方财富、腾讯、新浪，结果显示在页面。</span></li>
+            <li><b>每天更新</b><code>每天 18:30 · 北京时间</code><span>定时任务在 Codex 或系统调度器中管理；页面本身不执行采集。</span></li>
           </ol>
-          <p>
-            首次回溯 40 个交易日；后续补齐缺失日期、重算最近 3
-            日、保留全部历史。生产部署须同步生成的 JSON 或重新构建。
-          </p>
+          <p>首次回溯 40 个交易日；后续补齐缺失日期、重算最近 3 日、保留全部历史。生产部署须同步生成的 JSON 或重新构建。</p>
         </section>
 
         <section class="sources-panel" aria-label="免费数据源状态">
-          <div class="sources-heading">
-            <strong>免费数据源</strong><span>完整复盘与行情备用按能力切换</span
-            ><button @click="loadSourceHealth">重新读取检测结果 ↻</button>
-          </div>
+          <div class="sources-heading"><strong>免费数据源</strong><span>完整复盘与行情备用按能力切换</span><button @click="loadSourceHealth">重新读取检测结果 ↻</button></div>
           <p v-if="sourceError" class="notice">{{ sourceError }}</p>
           <div class="sources-grid">
             <article v-for="item in sourceHealth" :key="item.id" :class="item.status">
               <div>
                 <strong>{{ item.name }}</strong
-                ><span>{{
-                  item.status === 'ok'
-                    ? '检测通过'
-                    : item.status === 'unavailable'
-                      ? '暂不可用'
-                      : '尚未检测'
-                }}</span>
+                ><span>{{ item.status === 'ok' ? '检测通过' : item.status === 'unavailable' ? '暂不可用' : '尚未检测' }}</span>
               </div>
               <p>{{ item.capability }}</p>
               <small>{{ item.detail }}</small>
-              <time v-if="item.checkedAt"
-                >检测于 {{ item.checkedAt.slice(0, 19).replace('T', ' ') }}</time
-              >
+              <time v-if="item.checkedAt">检测于 {{ item.checkedAt.slice(0, 19).replace('T', ' ') }}</time>
             </article>
           </div>
           <p v-if="selected?.poolSource" class="source-provenance">
-            当前日期：股池 {{ sourceLabel(selected.poolSource) }} · 溢价
-            {{ sourceLabel(selected.quoteSource)
-            }}<span v-if="selected.method"> · {{ selected.method }}</span>
+            当前日期：股池 {{ sourceLabel(selected.poolSource) }} · 溢价 {{ sourceLabel(selected.quoteSource) }}<span v-if="selected.method"> · {{ selected.method }}</span>
           </p>
         </section>
 
@@ -343,19 +225,9 @@ onMounted(async () => {
           <div class="range-control">
             <span>观察区间</span>
             <div class="segments">
-              <button
-                v-for="n in [20, 40, 60]"
-                :key="n"
-                :class="{ chosen: windowSize === n }"
-                :aria-pressed="windowSize === n"
-                @click="changeWindow(n)"
-              >
-                {{ n }} 日
-              </button>
+              <button v-for="n in [20, 40, 60]" :key="n" :class="{ chosen: windowSize === n }" :aria-pressed="windowSize === n" @click="changeWindow(n)">{{ n }} 日</button>
             </div>
-            <button class="export-button" :disabled="!rows.length" @click="exportCsv">
-              ↓ 导出
-            </button>
+            <button class="export-button" :disabled="!rows.length" @click="exportCsv">↓ 导出</button>
           </div>
         </div>
 
@@ -365,9 +237,7 @@ onMounted(async () => {
               {{ card.label }}<span>{{ card.tag }}</span>
             </div>
             <div class="metric-value">
-              {{ formatValue(selected[card.key], card.key.includes('Premium'))
-              }}<template v-if="card.key === 'highest'"
-                ><span class="slash">/</span>{{ formatValue(selected.lowest) }}</template
+              {{ formatValue(selected[card.key], card.key.includes('Premium')) }}<template v-if="card.key === 'highest'"><span class="slash">/</span>{{ formatValue(selected.secondHighest) }}</template
               ><small>{{ card.unit }}</small>
             </div>
             <div class="metric-footer">
@@ -386,44 +256,7 @@ onMounted(async () => {
           </h2>
           <span>点击图表选择日期 · 点击图例切换指标</span>
         </div>
-        <div v-if="rows.length" class="charts-grid">
-          <ReviewChart
-            title="涨跌停家数"
-            subtitle="涨停与跌停的分布，观察情绪扩散"
-            :rows="rows"
-            :series="counts"
-            unit="家"
-            :selected-date="selectedDate"
-            @select="selectedDate = $event"
-          />
-          <ReviewChart
-            title="连板家数"
-            subtitle="连续 2 板及以上，观察接力活跃度"
-            :rows="rows"
-            :series="streaks"
-            unit="家"
-            :selected-date="selectedDate"
-            @select="selectedDate = $event"
-          />
-          <ReviewChart
-            title="昨日强势股 · 今日溢价"
-            subtitle="昨日涨停与连板股票，今日收盘的平均表现"
-            :rows="rows"
-            :series="premiums"
-            unit="%"
-            :selected-date="selectedDate"
-            @select="selectedDate = $event"
-          />
-          <ReviewChart
-            title="连板高度"
-            subtitle="最高与最低连板，观察市场接力空间"
-            :rows="rows"
-            :series="heights"
-            unit="板"
-            :selected-date="selectedDate"
-            @select="selectedDate = $event"
-          />
-        </div>
+        <ReviewOverview v-if="rows.length" :rows="rows" :selected-date="selectedDate" @select="selectedDate = $event" />
         <div v-else class="empty">
           {{ loading ? '正在读取复盘数据…' : '暂无数据，请生成示例或运行采集器。' }}
         </div>
@@ -433,11 +266,9 @@ onMounted(async () => {
             <span class="sample-icon">◎</span><strong>{{ dateLabel }} <span>溢价样本</span></strong>
           </div>
           <span
-            >昨日涨停 <b>{{ selected.upSamples }}</b> 家有效 ·
-            {{ selected.upExcluded }} 家剔除</span
+            >昨日涨停 <b>{{ selected.upSamples }}</b> 家有效 · {{ selected.upExcluded }} 家剔除</span
           ><span
-            >昨日连板 <b>{{ selected.consecutiveSamples }}</b> 家有效 ·
-            {{ selected.consecutiveExcluded }} 家剔除</span
+            >昨日连板 <b>{{ selected.consecutiveSamples }}</b> 家有效 · {{ selected.consecutiveExcluded }} 家剔除</span
           ><span class="sample-note">缺行情 / 当日 ST 不计入均值</span>
         </section>
 
@@ -445,14 +276,9 @@ onMounted(async () => {
           <div class="section-heading">
             <div>
               <h2>每日数据明细</h2>
-              <p>
-                {{ rows[0]?.date }} — {{ rows[rows.length - 1]?.date }} · 当前窗口
-                {{ rows.length }} 条 / 已存 {{ data?.rows.length ?? 0 }} 条
-              </p>
+              <p>{{ rows[0]?.date }} — {{ rows[rows.length - 1]?.date }} · 当前窗口 {{ rows.length }} 条 / 已存 {{ data?.rows.length ?? 0 }} 条</p>
             </div>
-            <button class="secondary" :disabled="!rows.length" @click="exportCsv">
-              ↓ 导出 CSV
-            </button>
+            <button class="secondary" :disabled="!rows.length" @click="exportCsv">↓ 导出 CSV</button>
           </div>
           <div class="table-scroll">
             <table>
@@ -464,19 +290,13 @@ onMounted(async () => {
                   <th>连板家数</th>
                   <th>昨日涨停溢价</th>
                   <th>昨日连板溢价</th>
-                  <th>最高 / 最低连板</th>
+                  <th>最高 / 次高连板</th>
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="row in [...rows].reverse()"
-                  :key="row.date"
-                  :class="{ selected: row.date === selectedDate }"
-                >
+                <tr v-for="row in [...rows].reverse()" :key="row.date" :class="{ selected: row.date === selectedDate }">
                   <td>
-                    <button @click="selectedDate = row.date">
-                      {{ row.date }}<i v-if="row.date === selectedDate"></i>
-                    </button>
+                    <button @click="selectedDate = row.date">{{ row.date }}<i v-if="row.date === selectedDate"></i></button>
                   </td>
                   <td class="red">{{ row.limitUp }}</td>
                   <td class="green">{{ row.limitDown }}</td>
@@ -489,7 +309,7 @@ onMounted(async () => {
                   </td>
                   <td>
                     {{ formatValue(row.highest) }} <span class="slash">/</span>
-                    {{ formatValue(row.lowest) }}
+                    {{ formatValue(row.secondHighest) }}
                   </td>
                 </tr>
               </tbody>
@@ -505,44 +325,24 @@ onMounted(async () => {
           <div class="method-grid">
             <div>
               <h3>01 <span>统计范围</span></h3>
-              <p>
-                沪深 A 股主板；按历史当日 ST 标记剔除 ST / *ST。不包含创业板、科创板、北交所和 B
-                股。
-              </p>
+              <p>沪深 A 股主板；按历史当日 ST 标记剔除 ST / *ST。不包含创业板、科创板、北交所和 B 股。</p>
             </div>
             <div>
               <h3>02 <span>涨跌停与连板</span></h3>
-              <p>
-                BaoStock 按主板 10% 价格规则推算收盘封板，排除注册制 IPO 前 5
-                日，向前追溯连板。特殊重新上市不设限日需核对；股池备用源采用其连板统计。无连板显示空值。
-              </p>
+              <p>BaoStock 按主板 10% 价格规则推算收盘封板，排除注册制 IPO 前 5 日，向前追溯连板。特殊重新上市不设限日需核对；股池备用源采用其连板统计。无连板显示空值。</p>
             </div>
             <div>
               <h3>03 <span>昨日股票的今日溢价</span></h3>
-              <p>
-                以前一交易日股票池为基础，等权平均（今日收盘 ÷ 除权昨收 − 1）× 100%。剔除当日
-                ST、停牌或缺行情，显示有效及剔除样本数；无样本显示“—”。
-              </p>
+              <p>以前一交易日股票池为基础，等权平均（今日收盘 ÷ 除权昨收 − 1）× 100%。剔除当日 ST、停牌或缺行情，显示有效及剔除样本数；无样本显示“—”。</p>
             </div>
             <div>
               <h3>04 <span>历史与更新</span></h3>
-              <p>
-                首次额外取前一交易日作为溢价基准，展示最近 40
-                个交易日。真实采集以交易所日历为准，自动跳过休市日，按日期去重并补齐漏跑日期。
-              </p>
+              <p>首次额外取前一交易日作为溢价基准，展示最近 40 个交易日。真实采集以交易所日历为准，自动跳过休市日，按日期去重并补齐漏跑日期。</p>
             </div>
           </div>
         </section>
         <footer>
-          <span class="footer-brand">收盘之后 <span>/</span> AFTER THE BELL</span
-          ><span
-            >数据记录与研究工具 ·
-            {{
-              source === 'demo'
-                ? '当前为模拟行情'
-                : `当日来源：${sourceLabel(selected?.poolSource ?? source)}`
-            }}</span
-          >
+          <span class="footer-brand">收盘之后 <span>/</span> AFTER THE BELL</span><span>数据记录与研究工具 · {{ source === 'demo' ? '当前为模拟行情' : `当日来源：${sourceLabel(selected?.poolSource ?? source)}` }}</span>
         </footer>
       </main>
     </div>

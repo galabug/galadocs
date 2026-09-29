@@ -15,7 +15,8 @@
       "upSamples": 42,
       "consecutiveSamples": 10,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 5
     },
     {
       "date": "2026-08-03",
@@ -29,7 +30,8 @@
       "upSamples": 45,
       "consecutiveSamples": 10,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-04",
@@ -43,7 +45,8 @@
       "upSamples": 64,
       "consecutiveSamples": 17,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-08-05",
@@ -57,7 +60,8 @@
       "upSamples": 69,
       "consecutiveSamples": 21,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-08-06",
@@ -71,7 +75,8 @@
       "upSamples": 61,
       "consecutiveSamples": 18,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-08-07",
@@ -85,7 +90,8 @@
       "upSamples": 76,
       "consecutiveSamples": 18,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-08-10",
@@ -99,7 +105,8 @@
       "upSamples": 68,
       "consecutiveSamples": 17,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-08-11",
@@ -113,7 +120,8 @@
       "upSamples": 69,
       "consecutiveSamples": 18,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-12",
@@ -127,7 +135,8 @@
       "upSamples": 63,
       "consecutiveSamples": 18,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-13",
@@ -141,7 +150,8 @@
       "upSamples": 55,
       "consecutiveSamples": 16,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-14",
@@ -155,7 +165,8 @@
       "upSamples": 62,
       "consecutiveSamples": 13,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-17",
@@ -169,7 +180,8 @@
       "upSamples": 48,
       "consecutiveSamples": 12,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-18",
@@ -183,7 +195,8 @@
       "upSamples": 50,
       "consecutiveSamples": 12,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-19",
@@ -197,7 +210,8 @@
       "upSamples": 61,
       "consecutiveSamples": 15,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-08-20",
@@ -211,7 +225,8 @@
       "upSamples": 53,
       "consecutiveSamples": 16,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 5
     },
     {
       "date": "2026-08-21",
@@ -225,7 +240,8 @@
       "upSamples": 54,
       "consecutiveSamples": 14,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 4
     },
     {
       "date": "2026-08-24",
@@ -239,7 +255,8 @@
       "upSamples": 34,
       "consecutiveSamples": 9,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 3
     },
     {
       "date": "2026-08-25",
@@ -253,7 +270,8 @@
       "upSamples": 40,
       "consecutiveSamples": 10,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 3
     },
     {
       "date": "2026-08-26",
@@ -267,7 +285,8 @@
       "upSamples": 17,
       "consecutiveSamples": 3,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 2
     },
     {
       "date": "2026-08-27",
@@ -281,7 +300,8 @@
       "upSamples": 21,
       "consecutiveSamples": 6,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 2
     },
     {
       "date": "2026-08-28",
@@ -295,7 +315,8 @@
       "upSamples": 12,
       "consecutiveSamples": 4,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 2
     },
     {
       "date": "2026-08-31",
@@ -309,7 +330,8 @@
       "upSamples": 22,
       "consecutiveSamples": 6,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 3
     },
     {
       "date": "2026-09-01",
@@ -323,7 +345,8 @@
       "upSamples": 33,
       "consecutiveSamples": 7,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 4
     },
     {
       "date": "2026-09-02",
@@ -337,7 +360,8 @@
       "upSamples": 38,
       "consecutiveSamples": 8,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 5
     },
     {
       "date": "2026-09-03",
@@ -351,7 +375,8 @@
       "upSamples": 49,
       "consecutiveSamples": 14,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 5
     },
     {
       "date": "2026-09-04",
@@ -365,7 +390,8 @@
       "upSamples": 45,
       "consecutiveSamples": 10,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-07",
@@ -379,7 +405,8 @@
       "upSamples": 58,
       "consecutiveSamples": 13,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-08",
@@ -393,7 +420,8 @@
       "upSamples": 62,
       "consecutiveSamples": 16,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-09",
@@ -407,7 +435,8 @@
       "upSamples": 49,
       "consecutiveSamples": 10,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-10",
@@ -421,7 +450,8 @@
       "upSamples": 62,
       "consecutiveSamples": 13,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-11",
@@ -435,7 +465,8 @@
       "upSamples": 63,
       "consecutiveSamples": 18,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-14",
@@ -449,7 +480,8 @@
       "upSamples": 49,
       "consecutiveSamples": 12,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-09-15",
@@ -463,7 +495,8 @@
       "upSamples": 59,
       "consecutiveSamples": 13,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-09-16",
@@ -477,7 +510,8 @@
       "upSamples": 66,
       "consecutiveSamples": 14,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-09-17",
@@ -491,7 +525,8 @@
       "upSamples": 76,
       "consecutiveSamples": 23,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 8
     },
     {
       "date": "2026-09-18",
@@ -505,7 +540,8 @@
       "upSamples": 71,
       "consecutiveSamples": 20,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-09-21",
@@ -519,7 +555,8 @@
       "upSamples": 72,
       "consecutiveSamples": 20,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 7
     },
     {
       "date": "2026-09-22",
@@ -533,7 +570,8 @@
       "upSamples": 58,
       "consecutiveSamples": 13,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 6
     },
     {
       "date": "2026-09-23",
@@ -547,7 +585,8 @@
       "upSamples": 60,
       "consecutiveSamples": 15,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 4
     },
     {
       "date": "2026-09-24",
@@ -561,7 +600,8 @@
       "upSamples": 44,
       "consecutiveSamples": 11,
       "upExcluded": 0,
-      "consecutiveExcluded": 0
+      "consecutiveExcluded": 0,
+      "secondHighest": 4
     }
   ]
 }

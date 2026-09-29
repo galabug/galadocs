@@ -29,7 +29,7 @@ export function parseReview(value: unknown): ReviewData {
     'upExcluded',
     'consecutiveExcluded',
   ] as const
-  const optional = ['highest', 'lowest', 'upPremium', 'consecutivePremium'] as const
+  const optional = ['highest', 'secondHighest', 'upPremium', 'consecutivePremium'] as const
   for (const row of data.rows) {
     if (
       !row ||
@@ -43,13 +43,11 @@ export function parseReview(value: unknown): ReviewData {
       ) ||
       row.consecutive > row.limitUp ||
       (row.consecutive === 0
-        ? row.highest !== null || row.lowest !== null
+        ? row.highest !== null || row.secondHighest !== null
         : row.highest === null ||
-          row.lowest === null ||
-          !Number.isInteger(row.highest) ||
-          !Number.isInteger(row.lowest) ||
-          row.lowest < 2 ||
-          row.highest < row.lowest)
+          !Number.isInteger(row.highest) || row.highest < 2 ||
+          (row.secondHighest !== null &&
+            (!Number.isInteger(row.secondHighest) || row.secondHighest < 2 || row.secondHighest > row.highest)))
     ) {
       throw new Error('数据含有重复日期或无效指标，请检查采集日志。')
     }

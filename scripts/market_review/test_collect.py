@@ -57,7 +57,7 @@ class MetricTests(unittest.TestCase):
         self.assertAlmostEqual(row['consecutivePremium'], -10)
         self.assertEqual((row['upSamples'], row['upExcluded']), (2, 2))
         self.assertEqual((row['consecutiveSamples'], row['consecutiveExcluded']), (1, 1))
-        self.assertEqual((row['highest'], row['lowest']), (5, 3))
+        self.assertEqual((row['highest'], row['secondHighest']), (5, 3))
 
     def test_null_is_not_zero(self):
         row = summarize('2026-09-24', snapshot(), snapshot([stock()]))
@@ -101,6 +101,11 @@ class MetricTests(unittest.TestCase):
                 collect(provider, db, provider.days[43], refresh=0)
         self.assertEqual(db.execute('SELECT COUNT(*) FROM metrics').fetchone()[0], 40)
         self.assertEqual(db.execute('SELECT MAX(date) FROM snapshots').fetchone()[0], provider.days[40].isoformat())
+
+    def test_second_highest_ranks_individual_stocks(self):
+        for heights, expected in [([5, 5, 3, 2], 5), ([5, 5], 5), ([5, 3, 2], 3), ([2], None), ([], None)]:
+            current = snapshot([stock(f'60000{i}.SH', boards=h) for i, h in enumerate(heights)])
+            self.assertEqual(summarize('2026-09-28', snapshot(), current)['secondHighest'], expected)
 
     def test_health_publish_preserves_newer_diagnostics(self):
         with tempfile.TemporaryDirectory() as directory:
