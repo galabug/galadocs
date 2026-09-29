@@ -174,7 +174,7 @@ def publish_health(path, report):
 
 def envelope(rows, source):
     return {'schemaVersion': VERSION, 'source': source,
-            'generatedAt': datetime.now(ZONE).isoformat(), 'rows': rows}
+            'generatedAt': datetime.now(ZONE).strftime('%Y-%m-%d %H:%M:%S'), 'rows': rows}
 
 
 def demo_rows():
@@ -309,7 +309,7 @@ def main():
         provider = Tushare(token)
     else:
         from free_sources import FreeSources
-        provider = FreeSources(ROOT / 'data/raw', end, args.source)
+        provider = FreeSources(ROOT / 'public/a', end, args.source)
         provider.providers['baostock'].refresh_days = args.refresh
     with process_lock(database):
         try:

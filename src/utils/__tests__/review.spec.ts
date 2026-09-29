@@ -18,7 +18,7 @@ const row = {
 const data = {
   schemaVersion: 1,
   source: 'demo',
-  generatedAt: '2026-09-24T20:30:00+08:00',
+  generatedAt: '2026-09-24 20:30:00',
   rows: [row],
 }
 

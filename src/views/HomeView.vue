@@ -262,7 +262,7 @@ onMounted(async () => {
             ><span>{{
               source === 'demo'
                 ? '当前为模拟数据，仅演示指标和图表，不代表真实行情。'
-                : `来源：${sourceLabel(selected?.poolSource ?? source)} · 最后采集 ${data?.generatedAt.slice(0, 19).replace('T', ' ')}`
+                : `来源：${sourceLabel(selected?.poolSource ?? source)} · 最后采集 ${data?.generatedAt}`
             }}</span>
           </div>
           <button :disabled="loading" @click="load(source === 'demo' ? 'live' : 'demo')">

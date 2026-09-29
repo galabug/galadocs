@@ -56,3 +56,6 @@ __pycache__/
 .venv-review/
 
 /public/data/sources.json
+
+# Downloaded daily main-board market data
+/public/a/

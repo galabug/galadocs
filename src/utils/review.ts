@@ -12,7 +12,8 @@ export function parseReview(value: unknown): ReviewData {
     data.schemaVersion !== 1 ||
     !['demo', 'tushare', 'free'].includes(data.source) ||
     typeof data.generatedAt !== 'string' ||
-    !Number.isFinite(Date.parse(data.generatedAt)) ||
+    !/^\d{4}-\d{2}-\d{2} ([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(data.generatedAt) ||
+    !Number.isFinite(Date.parse(data.generatedAt.replace(' ', 'T') + '+08:00')) ||
     !Array.isArray(data.rows) ||
     !data.rows.length
   ) {

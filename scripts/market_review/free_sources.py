@@ -207,7 +207,7 @@ class BaoStockSource:
         key = day.isoformat()
         if key in self.raw_memory:
             return self.raw_memory[key]
-        path = self.cache_dir / f'{key}.json'
+        path = self.cache_dir / key / 'baostock.json'
         rows = None
         if path.exists() and day not in self.refresh_dates:
             try:
@@ -235,7 +235,8 @@ class BaoStockSource:
         if len(actual) < 2500 or missing:
             raise RuntimeError(f'{key}: 主板行情不完整，缺 {len(missing)} 只，停止发布')
         # 写入通过校验的原始主板数据，失败重跑可复用；临时文件只属于当前进程。
-        descriptor, temporary = tempfile.mkstemp(dir=self.cache_dir, suffix='.tmp')
+        path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(dir=path.parent, suffix='.tmp')
         try:
             with os.fdopen(descriptor, 'w', encoding='utf-8') as output:
                 json.dump(list(actual.values()), output, ensure_ascii=False, allow_nan=False)
@@ -405,7 +406,7 @@ class FreeSources:
         self.health = Health()
         http = PublicHTTP()
         self.providers = {
-            'baostock': BaoStockSource(Path(cache_dir) / 'baostock', end),
+            'baostock': BaoStockSource(Path(cache_dir), end),
             'eastmoney': EastmoneySource(http),
             'tencent': TencentSource(http), 'sina': SinaSource(http),
         }

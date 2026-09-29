@@ -107,7 +107,7 @@ npm run review:collect -- --days 60 --database data/review-60.sqlite3
 
 - `data/market-review-free.sqlite3`：免费源历史
 - `data/market-review-tushare.sqlite3`：可选 Tushare 历史
-- `data/raw/baostock/YYYY-MM-DD.json`：通过校验的原始主板日行情
+- `public/a/YYYY-MM-DD/baostock.json`：通过校验的原始主板日行情，按日追加保留；可通过 `/a/YYYY-MM-DD/baostock.json` 读取。JSON 是股票记录数组，保留源字段（含 OHLC、昨收、成交量、成交额、ST 与停牌标记）；原始层保留 ST 股票供其他策略筛选，复盘统计仍剔除 ST。历史旧缓存已复制到此目录，后续读写使用新路径。
 - `public/data/review.json`：网页真实指标
 - `public/data/sources.json`：来源能力和最近检测结果
 - `public/data/review-demo.json`：独立示例，`npm run review:demo` 生成，永不作为真实采集失败的替代结果发布
