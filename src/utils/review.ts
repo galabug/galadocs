@@ -1,4 +1,10 @@
-import type { ReviewData, SourceHealth } from '@/types/review'
+import type { ReviewData, ReviewDay, SourceHealth } from '@/types/review'
+
+export function oneWordTopTwo(row: ReviewDay): number | null {
+  if (row.oneWordHighest === null || row.heightUnknown > 0) return null
+  if (row.secondHighest !== null && row.oneWordHighest < row.secondHighest) return null
+  return row.oneWordHighest
+}
 
 export function formatValue(value: number | null | undefined, percent = false): string {
   if (value == null) return '—'
@@ -28,8 +34,15 @@ export function parseReview(value: unknown): ReviewData {
     'consecutiveSamples',
     'upExcluded',
     'consecutiveExcluded',
+    'oneWordCount',
+    'heightUnknown',
   ] as const
-  const optional = ['highest', 'secondHighest', 'upPremium', 'consecutivePremium'] as const
+  const optional = ['highest', 'secondHighest', 'oneWordHighest', 'upPremium', 'consecutivePremium'] as const
+  const validStock = (stock: ReviewDay['oneWordStocks'][number]): boolean =>
+    Boolean(stock) &&
+    /^(600|601|603|605|000|001|002|003)\d{3}\.(SH|SZ)$/.test(stock.code) &&
+    typeof stock.name === 'string' && stock.name.length > 0 &&
+    Number.isInteger(stock.boards) && stock.boards >= 2
   for (const row of data.rows) {
     if (
       !row ||
@@ -42,7 +55,21 @@ export function parseReview(value: unknown): ReviewData {
         (key) => row[key] !== null && (typeof row[key] !== 'number' || !Number.isFinite(row[key])),
       ) ||
       row.consecutive > row.limitUp ||
-      (row.consecutive === 0
+      !Array.isArray(row.highestStocks) ||
+      !Array.isArray(row.secondHighestStocks) ||
+      !Array.isArray(row.oneWordStocks) ||
+      row.oneWordStocks.length !== row.oneWordCount ||
+      row.oneWordCount + row.heightUnknown > row.consecutive ||
+      row.oneWordStocks.some((stock) => !validStock(stock)) ||
+      row.highestStocks.some((stock) => !validStock(stock) || stock.boards !== row.highest) ||
+      row.secondHighestStocks.some((stock) => !validStock(stock) || stock.boards !== row.secondHighest) ||
+      (row.highest === null && row.highestStocks.length > 0) ||
+      (row.secondHighest === null && row.secondHighestStocks.length > 0) ||
+      (data.source !== 'demo' && row.highest !== null && row.highestStocks.length === 0) ||
+      (data.source !== 'demo' && row.secondHighest !== null && row.secondHighestStocks.length === 0) ||
+      (row.oneWordCount === 0 ? row.oneWordHighest !== null :
+        row.oneWordHighest !== Math.max(...row.oneWordStocks.map((stock) => stock.boards))) ||
+      (row.heightUnknown > 0 || row.consecutive === row.oneWordCount
         ? row.highest !== null || row.secondHighest !== null
         : row.highest === null ||
           !Number.isInteger(row.highest) || row.highest < 2 ||

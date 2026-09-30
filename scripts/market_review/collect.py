@@ -55,14 +55,30 @@ def summarize(day, previous, current):
     up_premium, up_samples, up_excluded = premium(previous_up)
     streak_premium, streak_samples, streak_excluded = premium(
         [r for r in previous_up if int(r['limit_times']) >= 2])
-    heights = [int(r['limit_times']) for r in consecutive]
+    ranked = [r for r in consecutive if r.get('all_one_word') is False]
+    one_word = [r for r in consecutive if r.get('all_one_word') is True]
+    unknown = [r for r in consecutive if r.get('all_one_word') is None]
+    heights = [int(r['limit_times']) for r in ranked]
+    highest = max(heights) if heights and not unknown else None
+    second_highest = sorted(heights, reverse=True)[1] if len(heights) > 1 and not unknown else None
+
+    def stock_label(stock):
+        return {'code': stock['ts_code'], 'name': stock['name'], 'boards': int(stock['limit_times'])}
+
+    one_word_stocks = [stock_label(r)
+                       for r in sorted(one_word, key=lambda r: (-int(r['limit_times']), r['ts_code']))]
     return {
         'date': date.fromisoformat(day).isoformat(),
         'limitUp': len(up), 'limitDown': len(down), 'consecutive': len(consecutive),
         'upPremium': up_premium, 'consecutivePremium': streak_premium,
-        'highest': max(heights) if heights else None,
-        'lowest': min(heights) if heights else None,
-        'secondHighest': sorted(heights, reverse=True)[1] if len(heights) > 1 else None,
+        'highest': highest,
+        'lowest': min(heights) if heights and not unknown else None,
+        'secondHighest': second_highest,
+        'highestStocks': [stock_label(r) for r in ranked if int(r['limit_times']) == highest],
+        'secondHighestStocks': [stock_label(r) for r in ranked if int(r['limit_times']) == second_highest],
+        'oneWordCount': len(one_word), 'oneWordHighest': max(
+            (int(r['limit_times']) for r in one_word), default=None),
+        'oneWordStocks': one_word_stocks, 'heightUnknown': len(unknown),
         'upSamples': up_samples, 'consecutiveSamples': streak_samples,
         'upExcluded': up_excluded, 'consecutiveExcluded': streak_excluded,
         'poolSource': current.get('poolSource', 'tushare'),
@@ -199,6 +215,9 @@ def demo_rows():
                      'consecutivePremium': round(1.5 + wave / 7 + rng.uniform(-1.5, 1.5), 2),
                      'highest': max(3, round(6 + wave / 9)), 'lowest': 2,
                      'secondHighest': max(3, round(6 + wave / 9)) - 1,
+                     'highestStocks': [], 'secondHighestStocks': [],
+                     'oneWordCount': 0, 'oneWordHighest': None,
+                     'oneWordStocks': [], 'heightUnknown': 0,
                      'upSamples': prior['limitUp'], 'consecutiveSamples': prior['consecutive'],
                      'upExcluded': 0, 'consecutiveExcluded': 0})
     return rows
@@ -215,18 +234,27 @@ def process_lock(database):
         yield
 
 
-def collect(provider, connection, end, days=40, refresh=3, allow_pending_latest=False):
+def collect(provider, connection, end, days=40, refresh=3, allow_pending_latest=False, start_day=None):
+    if start_day and start_day > end:
+        raise ValueError('起始日期不能晚于结束日期')
     connection.execute('CREATE TABLE IF NOT EXISTS snapshots (date TEXT PRIMARY KEY, payload TEXT NOT NULL)')
     connection.execute('CREATE TABLE IF NOT EXISTS metrics (date TEXT PRIMARY KEY, payload TEXT NOT NULL)')
     first = connection.execute('SELECT MIN(date) FROM metrics').fetchone()[0]
     start = date.fromisoformat(first) - timedelta(days=30) if first else end - timedelta(days=max(180, days * 3))
+    if start_day:
+        start = min(start, start_day - timedelta(days=30))
     calendar = provider.calendar(start, end)
-    if len(calendar) < days + 1 and not first:
+    if len(calendar) < days + 1 and not first and not start_day:
         raise RuntimeError('交易日历不足，无法生成完整初始窗口')
-    targets = [d for d in calendar if d.isoformat() >= first] if first else calendar[-days:]
+    if start_day:
+        targets = [d for d in calendar if d >= start_day]
+    else:
+        targets = [d for d in calendar if d.isoformat() >= first] if first else calendar[-days:]
     if not targets:
         raise RuntimeError('没有可采集的交易日')
-    existing = {r[0] for r in connection.execute('SELECT date FROM metrics')}
+    stored = {day: json.loads(payload) for day, payload in connection.execute('SELECT date,payload FROM metrics')}
+    existing = set(stored)
+    upgrades = {day for day, row in stored.items() if 'highestStocks' not in row}
     recent = set(targets[-refresh:]) if refresh else set()
     snapshot_recent = set(recent)
     if recent:
@@ -241,19 +269,40 @@ def collect(provider, connection, end, days=40, refresh=3, allow_pending_latest=
             saved = connection.execute('SELECT payload FROM snapshots WHERE date=?', (key,)).fetchone()
             if saved and day not in snapshot_recent:
                 cache[key] = json.loads(saved[0])
+                if hasattr(provider, 'enrich_snapshot') and any(
+                        'all_one_word' not in row or row['name'] == row['ts_code']
+                        for row in cache[key]['up']):
+                    provider.enrich_snapshot(day, cache[key], calendar)
+                    connection.execute('INSERT OR REPLACE INTO snapshots VALUES (?, ?)',
+                                       (key, json.dumps(cache[key], allow_nan=False)))
             else:
                 cache[key] = provider.snapshot(day)
                 connection.execute('INSERT OR REPLACE INTO snapshots VALUES (?, ?)',
                                    (key, json.dumps(cache[key], allow_nan=False)))
         return cache[key]
 
+    to_process = [day for day in targets
+                  if day.isoformat() not in existing or day in recent
+                  or day.isoformat() in upgrades]
+    # 历史补采先备齐整个区间的原始行情，再统一计算和发布统计。
+    # 日常增量仍逐日计算，以便当日行情未入库时保留此前漏跑的交易日。
+    bulk_backfill = start_day is not None and not allow_pending_latest
+
     # 一个完整批次原子提交；网络错误不会留下半批统计。
     with connection:
         if not connection.in_transaction:
             connection.execute('BEGIN')
-        for day in targets:
-            if day.isoformat() in existing and day not in recent:
-                continue
+        if bulk_backfill:
+            if to_process and calendar.index(to_process[0]) == 0:
+                raise RuntimeError('缺少前一交易日，无法计算溢价')
+            required = sorted({calendar[calendar.index(day) - 1] for day in to_process}
+                              | set(to_process))
+            for day in required:
+                snapshot(day)
+            if required:
+                cache.clear()
+                print(f'已备齐 {len(required)} 个交易日的原始行情，开始统一汇总', flush=True)
+        for day in to_process:
             index = calendar.index(day)
             if index == 0:
                 raise RuntimeError('缺少前一交易日，无法计算溢价')
@@ -280,6 +329,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--demo', action='store_true', help='生成固定 40 日示例，不请求网络')
     parser.add_argument('--end', type=date.fromisoformat, help='结束日期 YYYY-MM-DD；默认上海时间最近已收盘日')
+    parser.add_argument('--start', type=date.fromisoformat, help='补齐此日期起的全部交易日，不删除已有历史')
     parser.add_argument('--days', type=int, default=40, help='首次采集窗口，默认 40')
     parser.add_argument('--refresh', type=int, default=3, help='重算最近 N 日以接收数据修订')
     parser.add_argument('--output', type=Path, help='JSON 输出路径')
@@ -301,6 +351,8 @@ def main():
     end = args.end or latest
     if end > latest:
         parser.error('不能采集尚未收盘或未到默认数据入库时间的日期')
+    if args.start and args.start > end:
+        parser.error('起始日期不能晚于结束日期')
     source = 'tushare' if args.source == 'tushare' else 'free'
     output = args.output or ROOT / 'public/data/review.json'
     database = args.database or ROOT / f'data/market-review-{source}.sqlite3'
@@ -325,9 +377,14 @@ def main():
                 return
             with sqlite3.connect(database) as connection:
                 rows = collect(provider, connection, end, args.days, args.refresh,
-                               allow_pending_latest=source == 'free' and end == now.date())
+                               allow_pending_latest=source == 'free' and end == now.date(),
+                               start_day=args.start)
             payload = envelope(rows, source)
             if source == 'free':
+                if (rows and rows[-1].get('poolSource') == 'baostock'
+                        and provider.health.items['baostock']['status'] == 'ok'):
+                    provider.health.mark('baostock', True,
+                                         f'交易日历可用；已保存复盘数据截止 {rows[-1]["date"]}')
                 payload['sourceName'] = '免费多源 · BaoStock / 东方财富'
                 payload['calendarSource'] = provider.calendar_source
                 payload['sources'] = list(provider.health.items.values())

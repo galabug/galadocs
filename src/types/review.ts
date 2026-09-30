@@ -1,3 +1,9 @@
+export interface HeightStock {
+  code: string
+  name: string
+  boards: number
+}
+
 export interface ReviewDay {
   poolSource?: string
   quoteSource?: string
@@ -10,6 +16,12 @@ export interface ReviewDay {
   consecutivePremium: number | null
   highest: number | null
   secondHighest: number | null
+  highestStocks: HeightStock[]
+  secondHighestStocks: HeightStock[]
+  oneWordCount: number
+  oneWordHighest: number | null
+  oneWordStocks: HeightStock[]
+  heightUnknown: number
   upSamples: number
   consecutiveSamples: number
   upExcluded: number
@@ -27,7 +39,7 @@ export interface ReviewData {
   rows: ReviewDay[]
 }
 
-export type Metric = Exclude<keyof ReviewDay, 'date' | 'poolSource' | 'quoteSource' | 'method'>
+export type Metric = Exclude<keyof ReviewDay, 'date' | 'poolSource' | 'quoteSource' | 'method' | 'highestStocks' | 'secondHighestStocks' | 'oneWordCount' | 'oneWordHighest' | 'oneWordStocks' | 'heightUnknown'>
 export interface ChartSeries {
   key: Metric
   label: string

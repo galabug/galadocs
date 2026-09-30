@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from free_sources import BaoStockSource, EastmoneySource, FreeSources, band_direction
+from free_sources import BaoStockSource, EastmoneySource, FreeSources, band_direction, one_word_limit_up
 
 CALENDAR = [date(2026, 7, 1) + timedelta(days=i) for i in range(100)
             if (date(2026, 7, 1) + timedelta(days=i)).weekday() < 5]
@@ -12,10 +12,16 @@ CALENDAR = [date(2026, 7, 1) + timedelta(days=i) for i in range(100)
 
 def quote(day, close='11.06', prior='10.05', st='0', trading='1'):
     return {'date': day.isoformat(), 'code': 'sh.600001', 'close': close,
+            'open': close, 'high': close, 'low': close,
             'preclose': prior, 'isST': st, 'tradestatus': trading, 'adjustflag': '3'}
 
 
 class PriceRulesTests(unittest.TestCase):
+    def test_one_word_requires_all_four_prices_equal(self):
+        row = quote(CALENDAR[10])
+        self.assertTrue(one_word_limit_up(row))
+        self.assertFalse(one_word_limit_up({**row, 'low': '11.05'}))
+
     def test_exact_half_up_not_percentage_threshold(self):
         day = CALENDAR[10]
         self.assertEqual(band_direction(quote(day), '2000-01-01', CALENDAR), 'up')
@@ -44,6 +50,13 @@ class PriceRulesTests(unittest.TestCase):
             provider.raw = lambda day: {'600001.SH': quote(day, close='10' if day <= CALENDAR[3] else '11.06')}
             result = provider.snapshot(CALENDAR[9])
             self.assertEqual(result['up'][0]['limit_times'], 6)
+            self.assertTrue(result['up'][0]['all_one_word'])
+            provider.classified.clear()
+            provider.raw = lambda day: {'600001.SH':
+                                         {**quote(day, close='10' if day <= CALENDAR[3] else '11.06'),
+                                          'low': '11.05'} if day == CALENDAR[5]
+                                         else quote(day, close='10' if day <= CALENDAR[3] else '11.06')}
+            self.assertFalse(provider.snapshot(CALENDAR[9])['up'][0]['all_one_word'])
             provider.classified.clear()
             provider.raw = lambda day: {'600001.SH': quote(day, st='1' if day == CALENDAR[7] else '0')}
             self.assertEqual(provider.snapshot(CALENDAR[9])['up'][0]['limit_times'], 2)

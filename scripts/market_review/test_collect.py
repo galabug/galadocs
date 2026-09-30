@@ -10,8 +10,8 @@ from pathlib import Path
 from collect import collect, eligible, summarize, demo_rows, publish_health
 
 
-def stock(code='600001.SH', boards=1, name='样本'):
-    return {'ts_code': code, 'limit_times': boards, 'name': name}
+def stock(code='600001.SH', boards=1, name='样本', one_word=False):
+    return {'ts_code': code, 'limit_times': boards, 'name': name, 'all_one_word': one_word}
 
 
 def snapshot(up=None, down=None, daily=None, st=None):
@@ -91,6 +91,43 @@ class MetricTests(unittest.TestCase):
             collect(provider, db, provider.days[43], refresh=3)
             self.assertEqual(provider.calls, provider.days[40:44])
 
+    def test_backfills_earlier_trading_days_without_replacing_history(self):
+        provider = FakeProvider()
+        db = sqlite3.connect(':memory:')
+        with redirect_stdout(io.StringIO()):
+            recent = collect(provider, db, provider.days[60], refresh=0)
+            self.assertEqual(len(recent), 40)
+            provider.calls.clear()
+            rows = collect(provider, db, provider.days[60], refresh=0,
+                           start_day=provider.days[2])
+            self.assertEqual(provider.calls, provider.days[1:20])
+            self.assertEqual(len(rows), 59)
+            self.assertEqual(rows[0]['date'], provider.days[2].isoformat())
+            self.assertEqual(rows[-1]['date'], provider.days[60].isoformat())
+            self.assertEqual(len({row['date'] for row in rows}), len(rows))
+            provider.calls.clear()
+            self.assertEqual(collect(provider, db, provider.days[60], refresh=0,
+                                     start_day=provider.days[2]), rows)
+            self.assertEqual(provider.calls, [])
+
+    def test_bulk_backfill_fetches_all_snapshots_before_summarizing(self):
+        provider = FakeProvider()
+        db = sqlite3.connect(':memory:')
+        with redirect_stdout(io.StringIO()):
+            collect(provider, db, provider.days[40], refresh=0)
+            baseline = db.execute('SELECT COUNT(*) FROM metrics').fetchone()[0]
+            original_snapshot = provider.snapshot
+
+            def checked_snapshot(day):
+                self.assertEqual(db.execute('SELECT COUNT(*) FROM metrics').fetchone()[0], baseline)
+                return original_snapshot(day)
+
+            provider.snapshot = checked_snapshot
+            rows = collect(provider, db, provider.days[42], refresh=0,
+                           start_day=provider.days[1])
+        self.assertEqual(len(rows), 42)
+        self.assertEqual(rows[0]['date'], provider.days[1].isoformat())
+
     def test_failed_batch_rolls_back(self):
         provider = FakeProvider()
         db = sqlite3.connect(':memory:')
@@ -106,6 +143,29 @@ class MetricTests(unittest.TestCase):
         for heights, expected in [([5, 5, 3, 2], 5), ([5, 5], 5), ([5, 3, 2], 3), ([2], None), ([], None)]:
             current = snapshot([stock(f'60000{i}.SH', boards=h) for i, h in enumerate(heights)])
             self.assertEqual(summarize('2026-09-28', snapshot(), current)['secondHighest'], expected)
+
+    def test_all_one_word_streaks_are_annotated_but_not_ranked(self):
+        current = snapshot([
+            stock('600001.SH', 8, one_word=True),
+            stock('600002.SH', 6), stock('600003.SH', 6),
+            stock('600004.SH', 4, one_word=True),
+        ])
+        row = summarize('2026-09-28', snapshot(), current)
+        self.assertEqual((row['highest'], row['secondHighest']), (6, 6))
+        self.assertEqual((row['oneWordCount'], row['oneWordHighest']), (2, 8))
+        self.assertEqual(row['oneWordStocks'][0], {'code': '600001.SH', 'name': '样本', 'boards': 8})
+        self.assertEqual(len(row['highestStocks']), 2)
+        self.assertEqual(len(row['secondHighestStocks']), 2)
+        self.assertEqual(row['consecutive'], 4)
+        current['up'] = [stock('600001.SH', 8, one_word=True)]
+        self.assertIsNone(summarize('2026-09-28', snapshot(), current)['highest'])
+
+    def test_unknown_one_word_status_does_not_claim_height(self):
+        current = snapshot([stock('600001.SH', 5), stock('600002.SH', 7)])
+        del current['up'][1]['all_one_word']
+        row = summarize('2026-09-28', snapshot(), current)
+        self.assertEqual(row['heightUnknown'], 1)
+        self.assertIsNone(row['highest'])
 
     def test_health_publish_preserves_newer_diagnostics(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -9,13 +9,21 @@ const source = ref<ReviewData['source']>('free')
 const sourceHealth = ref<SourceHealth[]>([])
 const sourceError = ref('')
 const selectedDate = ref('')
-const windowSize = ref(40)
+const windowSize = ref<number | 'year' | 'all'>(40)
 const loading = ref(false)
 const error = ref('')
 const notice = ref('')
 const showGuide = ref(false)
 const section = ref('overview')
-const rows = computed(() => (data.value?.rows ?? []).slice(-windowSize.value))
+const rows = computed(() => {
+  const history = data.value?.rows ?? []
+  if (windowSize.value === 'all') return history
+  if (windowSize.value === 'year') {
+    const year = history[history.length - 1]?.date.slice(0, 4)
+    return history.filter((row) => row.date.startsWith(`${year}-`))
+  }
+  return history.slice(-windowSize.value)
+})
 const selected = computed(() => rows.value.find((r) => r.date === selectedDate.value) ?? rows.value[rows.value.length - 1])
 const previous = computed(() => {
   const all = data.value?.rows ?? []
@@ -62,7 +70,7 @@ async function load(nextSource: 'demo' | 'live' = source.value === 'demo' ? 'dem
     loading.value = false
   }
 }
-function changeWindow(value: number) {
+function changeWindow(value: number | 'year' | 'all') {
   windowSize.value = value
   if (!rows.value.some((row) => row.date === selectedDate.value)) selectedDate.value = rows.value[rows.value.length - 1]?.date ?? ''
 }
@@ -95,8 +103,8 @@ function sparkline(key: Metric) {
 }
 function exportCsv() {
   if (!rows.value.length) return
-  const header = ['日期', '涨停家数', '跌停家数', '连板家数', '昨日涨停溢价(%)', '昨日连板溢价(%)', '最高连板', '次高连板', '涨停溢价有效样本', '连板溢价有效样本', '涨停溢价剔除样本', '连板溢价剔除样本']
-  const keys: (keyof ReviewDay)[] = ['date', 'limitUp', 'limitDown', 'consecutive', 'upPremium', 'consecutivePremium', 'highest', 'secondHighest', 'upSamples', 'consecutiveSamples', 'upExcluded', 'consecutiveExcluded']
+  const header = ['日期', '涨停家数', '跌停家数', '连板家数', '昨日涨停溢价(%)', '昨日连板溢价(%)', '最高连板', '次高连板', '全程一字板家数', '全程一字板最高', '高度无法判定家数', '涨停溢价有效样本', '连板溢价有效样本', '涨停溢价剔除样本', '连板溢价剔除样本']
+  const keys: (keyof ReviewDay)[] = ['date', 'limitUp', 'limitDown', 'consecutive', 'upPremium', 'consecutivePremium', 'highest', 'secondHighest', 'oneWordCount', 'oneWordHighest', 'heightUnknown', 'upSamples', 'consecutiveSamples', 'upExcluded', 'consecutiveExcluded']
   const csv = '\uFEFF' + [header.join(','), ...rows.value.map((row) => keys.map((key) => row[key] ?? '').join(','))].join('\r\n')
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
   const a = document.createElement('a')
@@ -225,7 +233,7 @@ onMounted(async () => {
           <div class="range-control">
             <span>观察区间</span>
             <div class="segments">
-              <button v-for="n in [20, 40, 60]" :key="n" :class="{ chosen: windowSize === n }" :aria-pressed="windowSize === n" @click="changeWindow(n)">{{ n }} 日</button>
+              <button v-for="n in [20, 40, 60, 'year', 'all'] as const" :key="n" :class="{ chosen: windowSize === n }" :aria-pressed="windowSize === n" @click="changeWindow(n)">{{ n === 'year' ? '今年' : n === 'all' ? '全部' : `${n} 日` }}</button>
             </div>
             <button class="export-button" :disabled="!rows.length" @click="exportCsv">↓ 导出</button>
           </div>
@@ -247,6 +255,13 @@ onMounted(async () => {
               </svg>
             </div>
           </article>
+        </div>
+
+        <div v-if="selected" class="one-word-strip">
+          <strong>全程一字板（不计入最高 / 次高）</strong>
+          <span>{{ selected.oneWordCount }} 家<template v-if="selected.oneWordHighest"> · 最高 {{ selected.oneWordHighest }} 板</template></span>
+          <span v-if="selected.oneWordStocks.length">{{ selected.oneWordStocks.map((stock) => `${stock.name}（${stock.code}）${stock.boards}板`).join(' · ') }}</span>
+          <span v-if="selected.heightUnknown">{{ selected.heightUnknown }} 家缺少全程行情，高度暂不判定</span>
         </div>
 
         <div class="charts-heading">
@@ -291,6 +306,7 @@ onMounted(async () => {
                   <th>昨日涨停溢价</th>
                   <th>昨日连板溢价</th>
                   <th>最高 / 次高连板</th>
+                  <th>全程一字板</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,6 +327,9 @@ onMounted(async () => {
                     {{ formatValue(row.highest) }} <span class="slash">/</span>
                     {{ formatValue(row.secondHighest) }}
                   </td>
+                  <td :title="row.oneWordStocks.map((stock) => `${stock.name}（${stock.code}）${stock.boards}板`).join(' · ')">
+                    {{ row.oneWordCount }} 家<template v-if="row.oneWordHighest"> · 最高 {{ row.oneWordHighest }} 板</template><template v-if="row.heightUnknown"> · {{ row.heightUnknown }} 家待判定</template>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -329,7 +348,7 @@ onMounted(async () => {
             </div>
             <div>
               <h3>02 <span>涨跌停与连板</span></h3>
-              <p>BaoStock 按主板 10% 价格规则推算收盘封板，排除注册制 IPO 前 5 日，向前追溯连板。特殊重新上市不设限日需核对；股池备用源采用其连板统计。无连板显示空值。</p>
+              <p>BaoStock 按主板 10% 价格规则推算收盘封板，排除注册制 IPO 前 5 日，向前追溯连板。自首板至当日每天开高低收均为同一涨停价的股票单独标注，不参与常规最高 / 次高排名；进入全市场前二时另用虚线显示。鼠标移到最高、次高或一字板高度点可查看对应股票名称，点击日期可锁定明细。无法核实完整行情时高度显示“—”。特殊重新上市不设限日需核对；股池备用源采用其连板统计。</p>
             </div>
             <div>
               <h3>03 <span>昨日股票的今日溢价</span></h3>
@@ -868,6 +887,21 @@ h1 {
   height: 24px;
   opacity: 0.35;
 }
+.one-word-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 11px 15px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: #aebbd0;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.one-word-strip strong { color: #e9be66; font-weight: 500; }
 .red {
   color: var(--red);
 }

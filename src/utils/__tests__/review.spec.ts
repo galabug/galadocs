@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatValue, parseReview, parseSourceHealth, sourceLabel } from '@/utils/review'
+import { formatValue, oneWordTopTwo, parseReview, parseSourceHealth, sourceLabel } from '@/utils/review'
 
 const row = {
   date: '2026-09-24',
@@ -10,6 +10,12 @@ const row = {
   consecutivePremium: -1.25,
   highest: 4,
   secondHighest: 2,
+  highestStocks: [{ code: '600001.SH', name: '样本甲', boards: 4 }],
+  secondHighestStocks: [{ code: '600002.SH', name: '样本乙', boards: 2 }],
+  oneWordCount: 0,
+  oneWordHighest: null,
+  oneWordStocks: [],
+  heightUnknown: 0,
   upSamples: 0,
   consecutiveSamples: 3,
   upExcluded: 1,
@@ -34,8 +40,15 @@ describe('review data', () => {
     expect(() => parseReview({ ...data, rows: [{ ...row, upPremium: NaN }] })).toThrow()
     expect(() => parseReview({ ...data, rows: [{ ...row, consecutive: 0 }] })).toThrow()
     expect(() => parseReview({ ...data, rows: [{ ...row, secondHighest: 1 }] })).toThrow()
-    expect(parseReview({ ...data, rows: [{ ...row, secondHighest: 4 }] }).rows[0]?.secondHighest).toBe(4)
+    expect(parseReview({ ...data, rows: [{ ...row, secondHighest: 4, secondHighestStocks: row.highestStocks }] }).rows[0]?.secondHighest).toBe(4)
     expect(() => parseReview({ ...data, rows: [{ ...row, secondHighest: 5 }] })).toThrow()
+    expect(() => parseReview({ ...data, rows: [{ ...row, oneWordCount: 1 }] })).toThrow()
+    expect(parseReview({ ...data, rows: [{ ...row, oneWordCount: 1, oneWordHighest: 6, oneWordStocks: [{ code: '600003.SH', name: '一字股', boards: 6 }], highest: 4, secondHighest: null, secondHighestStocks: [] }] }).rows[0]?.oneWordHighest).toBe(6)
+  })
+  it('plots one-word height only when it enters the top two', () => {
+    expect(oneWordTopTwo({ ...row, oneWordCount: 1, oneWordHighest: 3, oneWordStocks: [{ code: '600003.SH', name: '一字股', boards: 3 }] })).toBe(3)
+    expect(oneWordTopTwo({ ...row, secondHighest: 3, oneWordCount: 1, oneWordHighest: 2, oneWordStocks: [{ code: '600003.SH', name: '一字股', boards: 2 }] })).toBeNull()
+    expect(oneWordTopTwo({ ...row, oneWordCount: 1, oneWordHighest: 6, oneWordStocks: [{ code: '600003.SH', name: '一字股', boards: 6 }], heightUnknown: 1 })).toBeNull()
   })
   it('sorts history and rejects unknown provenance', () => {
     expect(

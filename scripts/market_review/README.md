@@ -22,7 +22,7 @@ npm run review:collect
 
 Python 3.9+，macOS / Linux。`run.py` 自动使用项目虚拟环境，不更改全局 Python。BaoStock 固定为官方 0.9.4，使用其默认匿名公共节点，不需要注册或申请 API Key。API 客户端被隔离在一个可复用的工作进程中，每次请求有 45 秒硬超时，连接错误最多重连两次，退出时清理连接。
 
-前端将七项指标合并为一张共享日期轴的复盘图：数量（涨停、跌停、连板家数）、两类溢价、最高与次高连板分别保留自己的刻度，支持面积、柱形与折线、逐日数值开关、悬停统一读数、点击日期联动、20 / 40 / 60 日窗口、横向滚动、图例显隐、历史明细、CSV 导出。参考图片未标明名称的数字不作指标推断。刷新网页只是重新读取结果，不会后台触发采集。
+前端将七项指标合并为一张共享日期轴的复盘图：数量（涨停、跌停、连板家数）、两类溢价、最高与次高连板分别保留自己的刻度，支持面积、柱形与折线、逐日数值开关、悬停统一读数、点击日期联动、20 / 40 / 60 日及今年 / 全部窗口、横向滚动、图例显隐、历史明细、CSV 导出。参考图片未标明名称的数字不作指标推断。刷新网页只是重新读取结果，不会后台触发采集。
 
 ## 2. 已接入的来源及边界
 
@@ -84,7 +84,9 @@ npm run review:collect -- --source tushare
 
 ### 溢价与空值
 
-日收益率 = `(今日收盘 / 除权昨收 - 1) × 100%`，再对有效样本等权平均。昨日是前一个交易日，不是自然日前一天。今日 ST、停牌或缺行情会剔除并计数；无有效样本为 `null`（“—”），不能写 0。无连板时最高 / 次高也为 `null`，图表断线。次高按股票逐只排序取第二名：例如 5、5、3、2 板，次高为 5；5、3、2 板，次高为 3。只有一只连板股票时次高为 `null`。原 `lowest` 字段仅为兼容历史策略保留，页面与 CSV 使用 `secondHighest`。
+日收益率 = `(今日收盘 / 除权昨收 - 1) × 100%`，再对有效样本等权平均。昨日是前一个交易日，不是自然日前一天。今日 ST、停牌或缺行情会剔除并计数；无有效样本为 `null`（“—”），不能写 0。连板高度从首板到当日逐日核对开、高、低、收：每天均为同一涨停价的股票记为“全程一字板”，单独列出名称、代码、家数及最高板数，不参与常规最高 / 次高排名；连板家数仍包含它们。若一字板高度进入当日所有连板股票前两位，图中另以虚线显示其最高板数。鼠标移到常规最高、次高或一字板高度点即显示对应股票名称；点击图表日期锁定明细；分区标题固定在图表左侧。缺少完整 OHLC 的备用股池无法判定这种情况，高度显示 `null`，不能把未知股票冒充正常高度。正常连板次高按股票逐只排序取第二名：例如 5、5、3、2 板，次高为 5；5、3、2 板，次高为 3。只有一只正常连板股票时次高为 `null`。原 `lowest` 字段仅为兼容历史策略保留，页面与 CSV 使用 `secondHighest`。
+
+BaoStock 原始日行情不含股票名称；页面显示的名称取自 BaoStock 证券基础资料，因此历史日期可能显示该证券的现名。
 
 ## 4. 回填、增量与缓存
 
@@ -99,9 +101,10 @@ npm run review:collect -- --source tushare
 npm run review:collect -- --end 2026-09-24
 npm run review:collect -- --refresh 10
 npm run review:collect -- --days 60 --database data/review-60.sqlite3
+npm run review:collect -- --start 2026-01-01 --refresh 0
 ```
 
-`--days` 仅影响新数据库初始化；`--end` 不删除已有的后续历史。如需独立历史截面，应同时指定新的 `--database` 和 `--output`。
+`--days` 仅影响新数据库初始化；`--start` 会在一次运行中先备齐指定日期起所有缺失交易日的原始行情，再统一计算并发布统计，允许向已有历史之前回填；`--end` 不删除已有的后续历史。中断后可复用已下载的原始行情。如需独立历史截面，应同时指定新的 `--database` 和 `--output`；指定自定义数据库或输出文件时不会部署到线上看板。
 
 文件位置（真实数据和虚拟环境均忽略 Git）：
 
@@ -112,9 +115,9 @@ npm run review:collect -- --days 60 --database data/review-60.sqlite3
 - `public/data/sources.json`：来源能力和最近检测结果
 - `public/data/review-demo.json`：独立示例，`npm run review:demo` 生成，永不作为真实采集失败的替代结果发布
 
-## 5. 每天执行
+## 5. 工作日执行
 
-现在不需要配置行情密钥。本机已在 Codex 当前任务内创建“主板非 ST 盘后复盘”定时任务，每天北京时间 18:30 执行采集并同步已有构建目录的数据。请在 Codex 的定时任务中管理；电脑须开机、项目所在磁盘可用、应用保持运行。定时任务使用 Codex 账户额度，行情接口本身无需账号。未安装操作系统级定时任务。
+现在不需要配置行情密钥。本机已在 Codex 当前任务内创建“主板非 ST 盘后复盘”定时任务，周一至周五北京时间 18:30 执行 `npm run review:collect`：采集成功后重新打包并部署到 `/Users/zhulijian/mac-build-server/public/review`，采集失败则不部署。周末不运行，法定休市的工作日由交易日历跳过；漏跑的交易日会在下次运行时补齐。请在 Codex 的定时任务中管理；电脑须开机、项目所在磁盘可用、应用保持运行。定时任务使用 Codex 账户额度，行情接口本身无需账号。未安装操作系统级定时任务。
 
 如果以后改用独立系统定时器，先停用 Codex 中的该任务，避免重复运行。macOS/Linux 可以用以下脚本作为入口：
 
@@ -123,16 +126,16 @@ npm run review:collect -- --days 60 --database data/review-60.sqlite3
 set -eu
 cd /Volumes/ssd/angrybug/galadocs
 mkdir -p data
-./.venv-review/bin/python scripts/market_review/collect.py >> data/collect.log 2>&1
+npm run review:collect >> data/collect.log 2>&1
 ```
 
-机器系统时区为 Asia/Shanghai 时，每天北京时间 18:30：
+机器系统时区为 Asia/Shanghai 时，周一至周五北京时间 18:30：
 
 ```cron
-30 18 * * * /bin/sh /absolute/path/run-market-review.sh
+30 18 * * 1-5 /bin/sh /absolute/path/run-market-review.sh
 ```
 
-电脑关闭或休眠时不会执行，下次运行自动补齐。系统定时器中不依赖 npm 或交互 shell 的 PATH。生产网站需在采集后同步 `review.json` 和 `sources.json` 到部署目录，或重新构建；本地开发模式直接读取 `public/data/`。
+电脑关闭或休眠时不会执行，下次运行自动补齐。独立系统定时器需确保 `npm` 在 PATH 中。`review:collect` 每次采集成功都会完整构建并部署页面及 JSON；本地开发模式直接读取 `public/data/`。
 
 ## 6. 测试与参考
 

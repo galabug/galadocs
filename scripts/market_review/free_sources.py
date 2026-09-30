@@ -49,6 +49,12 @@ def decimal_price(value):
     return result
 
 
+def one_word_limit_up(row):
+    """A sealed limit-up traded at exactly one price for the entire session."""
+    prices = [decimal_price(row[key]) for key in ('open', 'high', 'low', 'close')]
+    return len(set(prices)) == 1
+
+
 def band_direction(row, ipo_date, calendar):
     """Modern main-board 10% band, half-up to one cent; never use pctChg >= 9.9."""
     if row.get('isST') not in ('0', '1') or row.get('tradestatus') not in ('0', '1'):
@@ -266,6 +272,7 @@ class BaoStockSource:
             self.calendar(day - timedelta(days=400), self.end)
         pools = self.pools(day)
         heights = {code: 1 for code in pools['up']}
+        one_word = {code: one_word_limit_up(self.raw(day)[code]) for code in heights}
         active = set(heights)
         index = self.calendar_days.index(day)
         while active:
@@ -275,13 +282,17 @@ class BaoStockSource:
             active &= self.pools(self.calendar_days[index])['up']
             for code in active:
                 heights[code] += 1
+                one_word[code] = one_word[code] and one_word_limit_up(
+                    self.raw(self.calendar_days[index])[code])
         rows = self.raw(day)
         st = [code for code, r in rows.items() if r['isST'] == '1']
         daily = [{'ts_code': code, 'close': float(decimal_price(r['close'])),
                   'pre_close': float(decimal_price(r['preclose']))}
                  for code, r in rows.items() if r['isST'] == '0' and r['tradestatus'] == '1']
+        basics = self.basic()
         return {
-            'up': [{'ts_code': code, 'name': code, 'limit_times': heights[code]} for code in sorted(pools['up'])],
+            'up': [{'ts_code': code, 'name': basics[code].get('code_name') or code, 'limit_times': heights[code],
+                    'all_one_word': one_word[code]} for code in sorted(pools['up'])],
             'down': [{'ts_code': code, 'name': code, 'limit_times': 0} for code in sorted(pools['down'])],
             'st': st, 'daily': daily, 'poolSource': self.name, 'quoteSource': self.name,
             'method': '主板10%价格规则，分位四舍五入；排除注册制IPO前5日；特殊重新上市/恢复上市不设限日需人工核对',
@@ -430,6 +441,56 @@ class FreeSources:
                 if name == 'baostock':
                     self.disabled.add(name)
         raise RuntimeError('所有交易日来源不可用；' + '；'.join(failures))
+
+    def enrich_snapshot(self, day, snapshot, calendar):
+        """Upgrade saved BaoStock pools from locally archived OHLC without network requests."""
+        if snapshot.get('poolSource') != 'baostock':
+            return snapshot
+        missing_flags = any('all_one_word' not in row for row in snapshot['up'])
+        missing_names = any(row['name'] == row['ts_code'] for row in snapshot['up'])
+        if not missing_flags and not missing_names:
+            return snapshot
+        if missing_names:
+            basics = self.providers['baostock'].basic()
+            for stock in snapshot['up']:
+                if stock['name'] == stock['ts_code']:
+                    stock['name'] = basics.get(stock['ts_code'], {}).get('code_name') or stock['ts_code']
+        if not missing_flags:
+            return snapshot
+        dates = list(self.providers['baostock'].calendar_days or calendar)
+        if day not in dates:
+            return snapshot
+        index = dates.index(day)
+        raw_cache = {}
+
+        def archived(trading_day):
+            if trading_day not in raw_cache:
+                path = self.providers['baostock'].cache_dir / trading_day.isoformat() / 'baostock.json'
+                if not path.exists():
+                    raw_cache[trading_day] = {}
+                else:
+                    rows = json.loads(path.read_text(encoding='utf-8'))
+                    raw_cache[trading_day] = {normalize_code(row['code']): row for row in rows}
+            return raw_cache[trading_day]
+
+        for stock in snapshot['up']:
+            if 'all_one_word' in stock:
+                continue
+            count = int(stock['limit_times'])
+            state = True
+            if index + 1 < count:
+                state = None
+            else:
+                for offset in range(count):
+                    row = archived(dates[index - offset]).get(stock['ts_code'])
+                    if row is None:
+                        state = None
+                        break
+                    if not one_word_limit_up(row):
+                        state = False
+                        break
+            stock['all_one_word'] = state
+        return snapshot
 
     def snapshot(self, day):
         candidates = ('baostock', 'eastmoney') if self.preferred == 'auto' else (self.preferred,)

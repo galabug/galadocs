@@ -21,7 +21,9 @@
     "review:demo": "python3 scripts/market_review/collect.py --demo",
     "review:collect": "python3 scripts/market_review/run.py",
     "review:test": "python3 -m unittest discover -s scripts/market_review -p \"test_*.py\"",
-    "review:sources": "python3 scripts/market_review/run.py --check-sources"
+    "review:sources": "python3 scripts/market_review/run.py --check-sources",
+    "deploy:mac-build-server": "node scripts/market_review/deploy.mjs",
+    "review:publish": "node scripts/market_review/deploy.mjs --data-only"
   },
   "dependencies": {
     "pinia": "^3.0.3",
