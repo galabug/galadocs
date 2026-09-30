@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { formatValue } from '@/utils/review'
 import type { ChartSeries, ReviewDay } from '@/types/review'
 
@@ -8,6 +8,7 @@ const emit = defineEmits<{ select: [date: string] }>()
 const hidden = ref<string[]>([])
 const labels = ref(true)
 const hovered = ref<string | null>(null)
+const plot = ref<HTMLDivElement | null>(null)
 const bands: { title: string; unit: string; series: ChartSeries[] }[] = [
   {
     title: '封板数量',
@@ -40,6 +41,16 @@ const step = computed(() => (width.value - 84) / Math.max(props.rows.length, 1))
 const x = (i: number) => 70 + (i + 0.5) * step.value
 const focusDate = computed(() => hovered.value ?? props.selectedDate)
 const focusRow = computed(() => props.rows.find((r) => r.date === focusDate.value))
+async function scrollToLatest() {
+  await nextTick()
+  if (plot.value) plot.value.scrollLeft = plot.value.scrollWidth
+}
+onMounted(scrollToLatest)
+watch(
+  () => [props.rows.length, props.rows[props.rows.length - 1]?.date],
+  scrollToLatest,
+  { flush: 'post' },
+)
 const plotted = computed(() =>
   bands.map((band, index) => {
     const series = band.series.filter((s) => !hidden.value.includes(s.key))
@@ -90,7 +101,7 @@ function segments(s: ChartSeries, y: (v: number) => number) {
       >
     </div>
     <p class="hint">横向滚动查看所有日期 · 悬停联动读数 · 点击锁定复盘日期 · 图例可隐藏指标</p>
-    <div class="scroll-plot" @mouseleave="hovered = null">
+    <div ref="plot" class="scroll-plot" @mouseleave="hovered = null">
       <svg :viewBox="`0 0 ${width} 640`" :style="{ width: `${width}px` }" role="group" aria-label="数量、溢价和连板高度共享日期的组合图">
         <g v-for="(row, i) in rows" :key="row.date">
           <rect :x="70 + i * step" y="0" :width="step" height="32" :fill="row.date === focusDate ? '#668567' : '#284537'" stroke="#182a26" />

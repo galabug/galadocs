@@ -57,5 +57,6 @@ __pycache__/
 
 /public/data/sources.json
 
-# Downloaded daily main-board market data
+# Downloaded daily main-board market data; keep raw files out of frontend builds.
+/market-data/daily/
 /public/a/

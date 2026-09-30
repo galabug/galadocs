@@ -311,7 +311,7 @@ def main():
         provider = Tushare(token)
     else:
         from free_sources import FreeSources
-        provider = FreeSources(ROOT / 'public/a', end, args.source)
+        provider = FreeSources(ROOT / 'market-data/daily', end, args.source)
         provider.providers['baostock'].refresh_days = args.refresh
     with process_lock(database):
         try:
