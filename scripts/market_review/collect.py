@@ -299,6 +299,7 @@ def collect(provider, connection, end, days=40, refresh=3, allow_pending_latest=
                               | set(to_process))
             for day in required:
                 snapshot(day)
+                cache.pop(day.isoformat(), None)
             if required:
                 cache.clear()
                 print(f'已备齐 {len(required)} 个交易日的原始行情，开始统一汇总', flush=True)
@@ -321,6 +322,8 @@ def collect(provider, connection, end, days=40, refresh=3, allow_pending_latest=
             connection.execute('RELEASE current_day')
             connection.execute('INSERT OR REPLACE INTO metrics VALUES (?, ?)',
                                (day.isoformat(), json.dumps(result, allow_nan=False)))
+            if bulk_backfill:
+                cache.pop(calendar[index - 1].isoformat(), None)
             print(f'{day}: 涨停 {result["limitUp"]} / 跌停 {result["limitDown"]} / 连板 {result["consecutive"]}', flush=True)
     return [json.loads(r[0]) for r in connection.execute('SELECT payload FROM metrics ORDER BY date')]
 

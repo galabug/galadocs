@@ -9,20 +9,27 @@ const source = ref<ReviewData['source']>('free')
 const sourceHealth = ref<SourceHealth[]>([])
 const sourceError = ref('')
 const selectedDate = ref('')
-const windowSize = ref<number | 'year' | 'all'>(40)
+type ReviewWindow = number | 'year' | 'previousYear' | `year:${number}` | 'all'
+const windowSize = ref<ReviewWindow>(40)
 const loading = ref(false)
 const error = ref('')
 const notice = ref('')
 const showGuide = ref(false)
 const section = ref('overview')
+const availableYears = computed(() => [...new Set((data.value?.rows ?? []).map((row) => Number(row.date.slice(0, 4))))].sort((a, b) => b - a))
+const latestYear = computed(() => availableYears.value[0] ?? 0)
+const hasPreviousYear = computed(() => availableYears.value.includes(latestYear.value - 1))
+const olderYears = computed(() => availableYears.value.filter((year) => year < latestYear.value - 1))
+const selectedOlderYear = computed(() => (typeof windowSize.value === 'string' && windowSize.value.startsWith('year:') ? windowSize.value : ''))
 const rows = computed(() => {
   const history = data.value?.rows ?? []
   if (windowSize.value === 'all') return history
-  if (windowSize.value === 'year') {
-    const year = history[history.length - 1]?.date.slice(0, 4)
+  if (typeof windowSize.value === 'number') return history.slice(-windowSize.value)
+  if (windowSize.value === 'year' || windowSize.value === 'previousYear' || windowSize.value.startsWith('year:')) {
+    const year = windowSize.value.startsWith('year:') ? Number(windowSize.value.slice(5)) : latestYear.value - (windowSize.value === 'previousYear' ? 1 : 0)
     return history.filter((row) => row.date.startsWith(`${year}-`))
   }
-  return history.slice(-windowSize.value)
+  return history
 })
 const selected = computed(() => rows.value.find((r) => r.date === selectedDate.value) ?? rows.value[rows.value.length - 1])
 const previous = computed(() => {
@@ -70,9 +77,13 @@ async function load(nextSource: 'demo' | 'live' = source.value === 'demo' ? 'dem
     loading.value = false
   }
 }
-function changeWindow(value: number | 'year' | 'all') {
+function changeWindow(value: ReviewWindow) {
   windowSize.value = value
   if (!rows.value.some((row) => row.date === selectedDate.value)) selectedDate.value = rows.value[rows.value.length - 1]?.date ?? ''
+}
+function selectOlderYear(event: Event) {
+  const value = (event.target as HTMLSelectElement).value
+  if (value) changeWindow(value as ReviewWindow)
 }
 function delta(key: Metric) {
   const current = selected.value?.[key]
@@ -233,8 +244,12 @@ onMounted(async () => {
           <div class="range-control">
             <span>观察区间</span>
             <div class="segments">
-              <button v-for="n in [20, 40, 60, 'year', 'all'] as const" :key="n" :class="{ chosen: windowSize === n }" :aria-pressed="windowSize === n" @click="changeWindow(n)">{{ n === 'year' ? '今年' : n === 'all' ? '全部' : `${n} 日` }}</button>
+              <button v-for="n in [20, 40, 60, 'year', 'previousYear', 'all'] as const" v-show="n !== 'previousYear' || hasPreviousYear" :key="n" :class="{ chosen: windowSize === n }" :aria-pressed="windowSize === n" @click="changeWindow(n)">{{ n === 'year' ? '今年' : n === 'previousYear' ? '去年' : n === 'all' ? '全部' : `${n} 日` }}</button>
             </div>
+            <select v-if="olderYears.length" aria-label="历史年份" :value="selectedOlderYear" @change="selectOlderYear">
+              <option value="" disabled>历史年份</option>
+              <option v-for="year in olderYears" :key="year" :value="`year:${year}`">{{ year }} 年</option>
+            </select>
             <button class="export-button" :disabled="!rows.length" @click="exportCsv">↓ 导出</button>
           </div>
         </div>
@@ -259,7 +274,9 @@ onMounted(async () => {
 
         <div v-if="selected" class="one-word-strip">
           <strong>全程一字板（不计入最高 / 次高）</strong>
-          <span>{{ selected.oneWordCount }} 家<template v-if="selected.oneWordHighest"> · 最高 {{ selected.oneWordHighest }} 板</template></span>
+          <span
+            >{{ selected.oneWordCount }} 家<template v-if="selected.oneWordHighest"> · 最高 {{ selected.oneWordHighest }} 板</template></span
+          >
           <span v-if="selected.oneWordStocks.length">{{ selected.oneWordStocks.map((stock) => `${stock.name}（${stock.code}）${stock.boards}板`).join(' · ') }}</span>
           <span v-if="selected.heightUnknown">{{ selected.heightUnknown }} 家缺少全程行情，高度暂不判定</span>
         </div>
@@ -779,7 +796,8 @@ h1 {
   font-size: 20px;
   color: #98a8c5;
 }
-.date-control select {
+.date-control select,
+.range-control select {
   padding: 7px 9px;
   border: 1px solid #303b4d;
   border-radius: 5px;
@@ -901,7 +919,10 @@ h1 {
   font-size: 11px;
   line-height: 1.6;
 }
-.one-word-strip strong { color: #e9be66; font-weight: 500; }
+.one-word-strip strong {
+  color: #e9be66;
+  font-weight: 500;
+}
 .red {
   color: var(--red);
 }

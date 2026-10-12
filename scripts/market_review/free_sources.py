@@ -154,6 +154,9 @@ class BaoStockSource:
             try:
                 return self.request_once(operation, **params)
             except (RuntimeError, OSError) as error:
+                # 公共节点明确拒绝当前访问时立即停止，避免重复登录延长限制。
+                if '10001011' in str(error):
+                    raise
                 if attempt == 2:
                     raise
                 print(f'BaoStock 连接重试 {attempt + 1}/2：{error}', flush=True)
@@ -212,7 +215,9 @@ class BaoStockSource:
     def raw(self, day):
         key = day.isoformat()
         if key in self.raw_memory:
-            return self.raw_memory[key]
+            rows = self.raw_memory.pop(key)
+            self.raw_memory[key] = rows
+            return rows
         path = self.cache_dir / key / 'baostock.json'
         rows = None
         if path.exists() and day not in self.refresh_dates:
@@ -251,6 +256,9 @@ class BaoStockSource:
             if os.path.exists(temporary):
                 os.unlink(temporary)
         self.raw_memory[key] = actual
+        # 多年回溯只需要临近交易日的原始行情常驻内存；更早日期可从已校验文件读取。
+        if len(self.raw_memory) > 24:
+            self.raw_memory.pop(next(iter(self.raw_memory)))
         return actual
 
     def pools(self, day):

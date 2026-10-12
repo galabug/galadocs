@@ -82,6 +82,10 @@ class FallbackTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'still offline'):
                 source.request('daily', date='2026-09-03')
             self.assertEqual(source.request_once.call_count, 3)
+            source.request_once = Mock(side_effect=RuntimeError('公共节点连接失败 (10001011)'))
+            with self.assertRaisesRegex(RuntimeError, '10001011'):
+                source.request('daily', date='2026-09-03')
+            self.assertEqual(source.request_once.call_count, 1)
 
     def test_complete_source_fallback_and_circuit_breaker(self):
         with tempfile.TemporaryDirectory() as directory:
