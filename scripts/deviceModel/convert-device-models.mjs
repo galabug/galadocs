@@ -91,8 +91,9 @@ function printHelp() {
   - 手机和 pad 的 360 名称缺少“360”时补“360 ”前缀
   - 手机和 pad 的 vivo 名称缺少“vivo”或“IQOO”时补“vivo ”前缀
   - 手机和 pad 的 Sony 名称缺少 sony（忽略大小写）时补“Sony ”前缀
-  - Xiaomi 设备名称中的 Xiaomi 替换成小米，REDMI/Redmi 替换成红米（忽略大小写）
-  - 名称中的 HONOR/HUAWEI 统一为荣耀/华为，品牌列仍为英文
+  - Xiaomi/REDMI 仅在名称开头时替换成小米/红米（忽略大小写）
+  - HONOR/HUAWEI 仅在名称开头时替换成荣耀/华为；品牌词位于中间或末尾时保留英文，品牌列仍为英文
+  - 完整名称“荣耀 Honor”与“荣耀 Honor+”分别统一为“荣耀”与“荣耀+”
   - 小米/红米 Pad 统一为小米平板/红米平板，realme GT 数字系列统一空格
   - 所有名称按 / 取第一段并清理空白；未知名称待确认，支持按品牌和型号人工覆盖
   - 月份文件只保存本次新增型号；同月重复执行会继续追加到同一个月份文件
@@ -445,7 +446,8 @@ function normalizeModelName(name, brand, brandContext, targetRows, targetIndexes
   }
   if (['huawei', '华为', 'honor', '荣耀'].includes(key)) {
     const displayBrand = ['huawei', '华为'].includes(key) ? '华为' : '荣耀'
-    if (name.includes(displayBrand)) return { name, prefixed: false }
+    const recognizableBrand = ['huawei', '华为'].includes(key) ? /华为|huawei/i : /荣耀|honor/i
+    if (recognizableBrand.test(name)) return { name, prefixed: false }
     return { name: `${displayBrand} ${name}`, prefixed: true }
   }
   if (['小米', 'xiaomi', '红米', 'redmi'].includes(key)) {

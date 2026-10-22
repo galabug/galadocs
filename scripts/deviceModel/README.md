@@ -74,9 +74,13 @@ npm run device-models -- --help
   不根据设备名称中的 REDMI 自动拆分源文件归属 Xiaomi 的品牌。
   realme、360、努比亚、vivo、索尼的名称补全规则同时适用于手机和平板，匹配英文时忽略大小写。
 - 名称先按 `/` 取第一段并去除首尾空格，再执行品牌名称规则。
-  名称中的 `HONOR`、`HUAWEI` 分别替换成 `荣耀`、`华为`，忽略大小写，品牌列仍为英文。
-  Xiaomi（以及历史小米/红米品牌）名称中的 `Xiaomi` 转成 `小米`，`REDMI/Redmi` 转成 `红米`，
-  `小米 Pad`、`红米 Pad` 分别统一为 `小米平板`、`红米平板`。
+  只有名称开头的 `HONOR`、`HUAWEI` 分别替换成 `荣耀`、`华为`，忽略大小写，品牌列仍为英文。
+  Xiaomi（以及历史小米/红米品牌）仅在名称开头将 `Xiaomi` 转成 `小米`、`REDMI/Redmi` 转成 `红米`，
+  仅开头的 `小米 Pad`、`红米 Pad` 分别统一为 `小米平板`、`红米平板`。
+  名称中间或末尾的品牌词保留原文，例如 `PORSCHE DESIGN HONOR Magic V2 RSR`、
+  `Leica Leitzphone powered by Xiaomi`；已有品牌词时不再额外补中文品牌前缀。
+  早期荣耀机型完整名称 `荣耀 Honor`、`荣耀 Honor+` 分别规范为 `荣耀`、`荣耀+`，
+  此规则在开头品牌中文化后执行，也适用于人工覆盖；不会改写其他包含 Honor 的名称。
   匹配时忽略大小写；品牌列按前述规范保存。名称从当前源文件重新获取，不对其他文字做全文翻译。
   realme GT 数字系列统一为 `GT 7`、`GT 7T` 格式；统一 `realme`、`vivo`、`iQOO`、`Nubia`、`Sony` 的写法。
   努比亚、索尼分别转换为 `Nubia`、`Sony`，缺少 Sony 时补 `Sony ` 前缀。
@@ -84,7 +88,7 @@ npm run device-models -- --help
 - 人工完整名称覆盖保存在 [nameOverrides.json](./nameOverrides.json)，默认是空数组。
   每项包含字符串 `brand`、`model`、`name`，按规范品牌和型号匹配，重复键或不合规名称报错。
   支持 `--name-overrides <path>` 指定其他配置。人工覆盖优先于普通词替换、系列和前缀规则，
-  仍遵循名称中的 HONOR/HUAWEI 中文化，以及类型、排除词、空白和未知名称校验。
+  仍遵循 HONOR/HUAWEI 仅在名称开头中文化，以及类型、排除词、空白和未知名称校验。
 - 未知机型、未知型号、unknown、N/A 等无有效覆盖的名称跳过新增；重新筛选模式会移出已有记录并保留明细。
   仅名称规范化模式遇到无法确认的名称会停止并提示重新筛选。
   Pro、Ultra、5G、芯片、尺寸、代数等版本信息保留；词序或大小写疑似别名仅报告，不自动合并。

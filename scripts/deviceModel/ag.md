@@ -53,13 +53,20 @@
 6. 保留版本、芯片、尺寸、代数和地区信息，不猜测名称或合并市场版本。
 
 人工覆盖优先于普通系列词与前缀规则，但仍需通过基本清洗、未知名称和排除词检查。
-HONOR→荣耀、HUAWEI→华为为名称硬约束，人工覆盖同样适用。
+品牌中文化只匹配清理后的名称开头，忽略英文大小写；品牌词在名称中间或末尾时保持原文，
+不得全文替换，也不应为了中文化给已有品牌词的联名名称额外添加中文前缀。
+该位置约束同样适用于人工覆盖。YC_BRAND 的既有规范不受名称位置影响。
+
+早期荣耀机型的两个完整名称单独规范：荣耀 Honor→荣耀、荣耀 Honor+→荣耀+，
+忽略 Honor 大小写，保留加号；开头 HONOR 中文化后产生的同类名称也适用。
+此规则在品牌中文化之后执行，人工覆盖同样适用，只匹配完整名称，不改写
+PORSCHE DESIGN HONOR 等联名名称，也不扩展匹配荣耀 Honor 8 等其他名称。
 
 | 适用范围                | YC_NAME 规则                                                                           |
 | ----------------------- | -------------------------------------------------------------------------------------- |
-| 所有设备                | HONOR→荣耀、HUAWEI→华为，忽略大小写                                                    |
-| HONOR / HUAWEI          | 需要补品牌时使用“荣耀 ”或“华为 ”，不能补回英文品牌词                                   |
-| Xiaomi / 历史小米、红米 | Xiaomi→小米、REDMI/Redmi→红米；小米 Pad→小米平板、红米 Pad→红米平板                    |
+| 所有设备                | 名称开头的 HONOR→荣耀、HUAWEI→华为，忽略大小写；中间和末尾保持英文                     |
+| HONOR / HUAWEI          | 名称任意位置已含对应中英文品牌时不补前缀；完全缺少品牌才补“荣耀 ”或“华为 ”             |
+| Xiaomi / 历史小米、红米 | 名称开头的 Xiaomi→小米、REDMI/Redmi→红米；仅开头的小米 Pad→小米平板、红米 Pad→红米平板 |
 | realme                  | 真我→realme，统一 realme 大小写；缺少品牌补 realme 前缀；GT 数字系列统一为 GT 7、GT 7T |
 | 360                     | 缺少 360 时补“360 ”                                                                    |
 | Nubia / 努比亚          | nubia/努比亚统一为 Nubia；含红魔或 REDMAGIC 时保留子系列，否则缺少品牌补“Nubia ”       |
@@ -70,13 +77,18 @@ HONOR→荣耀、HUAWEI→华为为名称硬约束，人工覆盖同样适用。
 只对明确系列应用空格规则，不给所有字母数字之间插空格，不全局改英文大小写。
 Pro、Ultra、5G、4G、芯片、尺寸、代数及 Nothing Phone 括号等辨识信息不可任意删除。
 
+位置规则示例：HONOR Magic8→荣耀 Magic8、HUAWEI Mate 80→华为 Mate 80、
+Xiaomi 17 Ultra→小米 17 Ultra；PORSCHE DESIGN HONOR Magic V2 RSR、
+PORSCHE DESIGN HUAWEI Mate RS、Leica Leitzphone powered by Xiaomi 均保持原文。
+
 ## 人工覆盖与异常报告
 
 - nameOverrides.json 为 JSON 数组，每项包含非空字符串 brand、model、name。
   品牌使用规范品牌或可解析别名，按“品牌＋型号”匹配，重复键及非法名称必须报错。
   支持 --name-overrides 指定其他 JSON 文件。
 - 默认覆盖表为空，只有人工确认过的完整名称才加入。
-  联名名称如 Leica Leitzphone powered by Xiaomi 可确认后完整覆盖，避免机械替换产生混搭。
+  联名名称如 Leica Leitzphone powered by Xiaomi 已由位置规则保护，无需专门覆盖；
+  只有源名称与已确认正式名称不一致的情况才需要人工覆盖。
 - 未知机型、未知型号、未知设备、unknown、unknown model、unknown device、N/A
   等占位名称进入待确认清单，记录品牌、型号、源名称；有效人工覆盖可恢复导出。
 - 全量重新筛选移出未知名称；仅规范名称模式遇到未知名称应停止并提示使用重新筛选模式。

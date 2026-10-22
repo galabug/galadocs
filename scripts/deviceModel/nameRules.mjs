@@ -21,8 +21,11 @@ export function selectDeviceName(name, brand, model, context) {
   const selected = override ?? name
   const cleaned = cleanDeviceName(selected)
   const unknown = isUnknownName(selected) || isUnknownName(cleaned)
+  const localized = cleaned.replace(/^(honor|huawei)/i, (value) =>
+    value.toLowerCase() === 'honor' ? '荣耀' : '华为',
+  )
   return {
-    name: unknown ? '' : cleaned.replace(/honor/gi, '荣耀').replace(/huawei/gi, '华为'),
+    name: unknown ? '' : localized.replace(/^荣耀\s*honor(\+)?$/i, '荣耀$1'),
     overridden: override !== undefined,
     unknown,
   }
@@ -32,10 +35,9 @@ export function normalizeNameStyle(name, brand) {
   const key = String(brand).trim().toLowerCase()
   if (['xiaomi', '小米', 'redmi', '红米'].includes(key)) {
     return name
-      .replace(/xiaomi/gi, '小米')
-      .replace(/redmi/gi, '红米')
-      .replace(/(小米|红米)\s*pad\b/gi, '$1平板')
-      .replace(/(小米|红米)\s+平板/g, '$1平板')
+      .replace(/^(xiaomi|redmi)/i, (value) => (value.toLowerCase() === 'xiaomi' ? '小米' : '红米'))
+      .replace(/^(小米|红米)\s*pad\b/i, '$1平板')
+      .replace(/^(小米|红米)\s+平板/, '$1平板')
   }
   if (['realme', '真我'].includes(key)) {
     return name.replace(/真我|realme/gi, 'realme').replace(/\bgt\s*(\d+)/gi, 'GT $1')
