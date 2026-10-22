@@ -3,6 +3,7 @@ node_modules
 cache
 .vscode
 backup
+modelBak
 * copy.*
 outputs
 .build
