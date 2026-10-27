@@ -85,6 +85,10 @@ npm run device-models -- --help
   realme GT 数字系列统一为 `GT 7`、`GT 7T` 格式；统一 `realme`、`vivo`、`iQOO`、`Nubia`、`Sony` 的写法。
   努比亚、索尼分别转换为 `Nubia`、`Sony`，缺少 Sony 时补 `Sony ` 前缀。
   连续空白压缩成一个空格；第一段为空的记录跳过。排除关键词仍检查源完整名称，避免分割隐藏不合规内容。
+- Apple 名称括号内的“第 N 代”移为系列名称后的数字，例如 `iPad Air (第3代)`→`iPad Air 3`、
+  `iPhone SE (第 2 代)`→`iPhone SE 2`。尺寸保留在数字后的括号中：
+  `iPad Pro (12.9 英寸, 第 3 代)`→`iPad Pro 3(12.9英寸)`。
+  兼容中英文括号、逗号及代数中的空格；保留其他版本文字，无代数标记不改，人工完整名称覆盖优先。
 - 人工完整名称覆盖保存在 [nameOverrides.json](./nameOverrides.json)，默认是空数组。
   每项包含字符串 `brand`、`model`、`name`，按规范品牌和型号匹配，重复键或不合规名称报错。
   支持 `--name-overrides <path>` 指定其他配置。人工覆盖优先于普通词替换、系列和前缀规则，

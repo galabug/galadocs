@@ -33,6 +33,19 @@ export function selectDeviceName(name, brand, model, context) {
 
 export function normalizeNameStyle(name, brand) {
   const key = String(brand).trim().toLowerCase()
+  if (key === 'apple') {
+    return name.replace(/^(.*?)\s*[（(]([^()（）]*)[)）](.*)$/, (original, series, details, suffix) => {
+      const parts = details.split(/[,，]/).map((part) => part.trim())
+      const generations = parts.filter((part) => /^第\s*\d+\s*代$/.test(part))
+      if (generations.length !== 1) return original
+      const generation = generations[0].match(/\d+/)[0]
+      const remaining = parts
+        .filter((part) => part !== generations[0])
+        .map((part) => part.replace(/(\d)\s+英寸/g, '$1英寸'))
+        .join(', ')
+      return `${series.trim()} ${generation}${remaining ? `(${remaining})` : ''}${suffix}`
+    })
+  }
   if (['xiaomi', '小米', 'redmi', '红米'].includes(key)) {
     return name
       .replace(/^(xiaomi|redmi)/i, (value) => (value.toLowerCase() === 'xiaomi' ? '小米' : '红米'))

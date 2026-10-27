@@ -2044,12 +2044,12 @@ PTP-AN70,mob,honor,荣耀,,Patek,荣耀 Magic7 Pro,卫星通信版,honor_cn
 PTP-AN20,mob,honor,荣耀,,Patek,荣耀 Magic7 RSR 保时捷设计,,honor_cn
 MBH-AN10,mob,honor,荣耀,,Maybach,荣耀 Magic V5,,honor_cn
 CLE-AN00,mob,honor,荣耀,,Celine,荣耀 Magic V Flip2,,honor_cn
-BKQ-AN00,mob,honor,荣耀,,,荣耀 Magic8,,honor_cn
-BKQ-AN80,mob,honor,荣耀,,,荣耀 Magic8,16GB+1TB,honor_cn
-BKQ-AN10,mob,honor,荣耀,,,荣耀 Magic8 Pro,,honor_cn
-BKQ-AN90,mob,honor,荣耀,,,荣耀 Magic8 Pro,16GB+1TB,honor_cn
+BKQ-AN00,mob,honor,荣耀,,Birkin,荣耀 Magic8,,honor_cn
+BKQ-AN80,mob,honor,荣耀,,Birkin,荣耀 Magic8,16GB+1TB,honor_cn
+BKQ-AN10,mob,honor,荣耀,,Birkin,荣耀 Magic8 Pro,,honor_cn
+BKQ-AN90,mob,honor,荣耀,,Birkin,荣耀 Magic8 Pro,16GB+1TB,honor_cn
 LDY-AN00,mob,honor,荣耀,,Lindy,荣耀 Magic8 Pro Air,,honor_cn
-BKQ-AN20,mob,honor,荣耀,,,荣耀 Magic8 RSR 保时捷设计,,honor_cn
+BKQ-AN20,mob,honor,荣耀,,Birkin,荣耀 Magic8 RSR 保时捷设计,,honor_cn
 PNM-AN10,mob,honor,荣耀,,Phenom,荣耀 Magic V6,,honor_cn
 PNM-AN20,mob,honor,荣耀,,Phenom,荣耀 Magic V6,16GB+1TB,honor_cn
 MLY-AN00,mob,honor,荣耀,,Molly,荣耀 Magic9,,honor_cn
@@ -2861,7 +2861,7 @@ PTP-N59,mob,honor,HONOR,,Patek,PORSCHE DESIGN HONOR Magic7 RSR,,honor_global_en
 BRP-NX1M,mob,honor,HONOR,,BruceP,HONOR Magic7 Lite,,honor_global_en
 BRP-NX3,mob,honor,HONOR,,BruceP,HONOR Magic7 Lite,,honor_global_en
 MBH-N49,mob,honor,HONOR,,Maybach,HONOR Magic V5,,honor_global_en
-BKQ-N49,mob,honor,HONOR,,,HONOR Magic8 Pro,,honor_global_en
+BKQ-N49,mob,honor,HONOR,,Birkin,HONOR Magic8 Pro,,honor_global_en
 MTN-NX1M,mob,honor,HONOR,,,HONOR Magic8 Lite,,honor_global_en
 MTN-NX3,mob,honor,HONOR,,,HONOR Magic8 Lite,,honor_global_en
 BSN-NX1M,mob,honor,HONOR,,,HONOR Magic9 Lite+,,honor_global_en
@@ -2881,6 +2881,8 @@ NLA-LX1,mob,honor,HONOR,,Nala,HONOR X5c,Plus,honor_global_en
 NLA-LX2P,mob,honor,HONOR,,Nala,HONOR X5c,Plus,honor_global_en
 NAA-LX2,mob,honor,HONOR,,,HONOR X5d,,honor_global_en
 NAA-LX2P,mob,honor,HONOR,,,HONOR X5d,Plus,honor_global_en
+MEL-LX2,mob,honor,HONOR,,Melody,HONOR X5d s,,honor_global_en
+MLD-LX2,mob,honor,HONOR,,Melody,HONOR X5e s,,honor_global_en
 VNE-LX1,mob,honor,HONOR,,Vinnie,HONOR X6,,honor_global_en
 VNE-LX2,mob,honor,HONOR,,Vinnie,HONOR X6,,honor_global_en
 VNE-LX3,mob,honor,HONOR,,Vinnie,HONOR X6,,honor_global_en
@@ -2965,9 +2967,12 @@ GFY-LX3,mob,honor,HONOR,,Goofy,HONOR Play9A,,honor_global_en
 NIC-LX3P,mob,honor,HONOR,,Nick,HONOR Play9C,,honor_global_en
 ELA-LX2,mob,honor,HONOR,,Elsa,HONOR Play10,,honor_global_en
 ELA-LX3,mob,honor,HONOR,,Elsa,HONOR Play10,,honor_global_en
-MLD-LX1,mob,honor,HONOR,,,HONOR Play20A,,honor_global_en
-MLD-LX2,mob,honor,HONOR,,,HONOR Play20A,,honor_global_en
-MLD-LX3,mob,honor,HONOR,,,HONOR Play20A,,honor_global_en
+MOD-LX3,mob,honor,HONOR,,,HONOR Play20,,honor_global_en
+MLD-LX1,mob,honor,HONOR,,Melody,HONOR Play20A,,honor_global_en
+MLD-LX2,mob,honor,HONOR,,Melody,HONOR Play20A,,honor_global_en
+MLD-LX3,mob,honor,HONOR,,Melody,HONOR Play20A,,honor_global_en
+MEL-LX2,mob,honor,HONOR,,Melody,HONOR Play20C,,honor_global_en
+MEL-LX3,mob,honor,HONOR,,Melody,HONOR Play20C,,honor_global_en
 HEY-W09,pad,honor,HONOR,,Hendry,HONOR Pad 8,,honor_global_en
 HEY2-W09,pad,honor,HONOR,,Hendry2,HONOR Pad 9,Wi-Fi,honor_global_en
 HEY2-N09,pad,honor,HONOR,,Hendry2,HONOR Pad 9,5G,honor_global_en
@@ -4637,6 +4642,7 @@ TB331FC,pad,lenovo,联想,,Balsa,小新 Pad 2024,,lenovo_cn
 TB335FC,pad,lenovo,联想,,sycamore,小新平板 11,,lenovo_cn
 TB335ZC,pad,lenovo,联想,,sycamore,小新平板 11,5G,lenovo_cn
 TB365FC,pad,lenovo,联想,,cava,小新平板 12.1,,lenovo_cn
+TB356FC,pad,lenovo,联想,,malibu,联想 AI 平板 小新 10.1,,lenovo_cn
 Lenovo TB-J607F,pad,lenovo,联想,,arnoz,小新 Pad Plus,,lenovo_cn
 Lenovo TB-J607Z,pad,lenovo,联想,,arnoz,小新 Pad Plus,5G,lenovo_cn
 TB350FU,pad,lenovo,联想,,tulip,小新 Pad Plus 2023,,lenovo_cn
@@ -7281,6 +7287,7 @@ OPD2502,pad,oppo,OPPO,,greenland,OPPO Pad 5,Wi-Fi,oppo_global_en
 OPD2503,pad,oppo,OPPO,,greenland,OPPO Pad 5,5G,oppo_global_en
 OPD2419,pad,oppo,OPPO,,fiji,OPPO Pad SE,Wi-Fi,oppo_global_en
 OPD2420,pad,oppo,OPPO,,fiji,OPPO Pad SE,LTE,oppo_global_en
+OPD2516,pad,oppo,OPPO,,ivy,OPPO Pad Mini,,oppo_global_en
 OB19B1,band,oppo,OPPO,,,OPPO Band,Style,oppo_global_en
 OB19O3,band,oppo,OPPO,,,OPPO Band,Style,oppo_global_en
 OBBE215,band,oppo,OPPO,,heisenberg,OPPO Band 2,Japan,oppo_global_en
@@ -9032,7 +9039,7 @@ SM-E566B,mob,samsung,Samsung,,m56x,Galaxy F56 5G,,samsung_global_en
 SM-E625F,mob,samsung,Samsung,,f62,Galaxy F62,,samsung_global_en
 SM-E076B,mob,samsung,Samsung,,a07x,Galaxy F70e 5G,,samsung_global_en
 SM-E176E,mob,samsung,Samsung,,a17x,Galaxy F70 5G,,samsung_global_en
-SM-E476B,mob,samsung,Samsung,,,Galaxy F70 Pro 5G,,samsung_global_en
+SM-E476B,mob,samsung,Samsung,,m47xq,Galaxy F70 Pro 5G,,samsung_global_en
 SM701,mob,smartisan,坚果,,sfo,Smartisan T1,3G 版,smartisan
 SM705,mob,smartisan,坚果,,sfo,Smartisan T1,4G 版,smartisan
 SM801,mob,smartisan,坚果,,icesky,Smartisan T2,,smartisan
@@ -9852,6 +9859,10 @@ V2542,mob,vivo,vivo,,PD2527F,X300 FE,,vivo_global_en
 V2633,mob,vivo,vivo,,PD2527F,X300 FE,,vivo_global_en
 V2562,mob,vivo,vivo,,PD2547F,X300 Ultra,,vivo_global_en
 V2559,mob,vivo,vivo,,PD2545F,X Fold6,,vivo_global_en
+V2656,mob,vivo,vivo,,PD2620F,X500 E,,vivo_global_en
+V2621,mob,vivo,vivo,,PD2608F,X500 Pro,,vivo_global_en
+V2622,mob,vivo,vivo,,PD2608F,X500 Pro,,vivo_global_en
+V2610,mob,vivo,vivo,,PD2602F,X500 Pro Max,,vivo_global_en
 vivo 1819,mob,vivo,vivo,,PD1831F,V15,,vivo_global_en
 vivo 1920,mob,vivo,vivo,,PD1948F,V17,,vivo_global_en
 vivo 1907,mob,vivo,vivo,,PD1913F,V17 Neo,,vivo_global_en
@@ -9934,17 +9945,18 @@ V2635,mob,vivo,vivo,,,V70 Lite,,vivo_global_en
 V2615,mob,vivo,vivo,,PD2512F,V70 Lite 5G,,vivo_global_en
 V2637,mob,vivo,vivo,,PD2512F,V70 Lite 5G,,vivo_global_en
 V2648,mob,vivo,vivo,,PD2620F,V80,,vivo_global_en
+V2649,mob,vivo,vivo,,PD2620F,V80,,vivo_global_en
 V2576,mob,vivo,vivo,,PD2575F,V80 Lite 5G,,vivo_global_en
 V2643,mob,vivo,vivo,,PD2575F,V80 Lite 5G,,vivo_global_en
 V2644,mob,vivo,vivo,,PD2575F,V80 Lite 5G,,vivo_global_en
-V2626,mob,vivo,vivo,,,V80 Lite 5G,,vivo_global_en
-V2655,mob,vivo,vivo,,,V80 Lite 5G,,vivo_global_en
+V2626,mob,vivo,vivo,,PD2607F,V80 Lite 5G,,vivo_global_en
+V2655,mob,vivo,vivo,,PD2607F,V80 Lite 5G,,vivo_global_en
 vivo 1907,mob,vivo,vivo,,PD1913F,S1,,vivo_global_en
 V1937,mob,vivo,vivo,,PD1982F,S1 Prime,,vivo_global_en
 vivo 1920,mob,vivo,vivo,,PD1945F,S1 Pro,,vivo_global_en
 vivo 1920_20,mob,vivo,vivo,,PD1945F,S1 Pro,,vivo_global_en
 V2576,mob,vivo,vivo,,PD2575F,S2,,vivo_global_en
-V2640,mob,vivo,vivo,,,S2 FE,,vivo_global_en
+V2640,mob,vivo,vivo,,PD2607F,S2 FE,,vivo_global_en
 V2153,mob,vivo,vivo,,PD2201F,T1,,vivo_global_en
 V2168,mob,vivo,vivo,,PD2201F,T1,,vivo_global_en
 V2141,mob,vivo,vivo,,PD2165F,T1 5G,,vivo_global_en
@@ -10116,6 +10128,9 @@ V2533,mob,vivo,vivo,,PD2511F,Y31e 5G,,vivo_global_en
 V2614,mob,vivo,vivo,,PD2511F,Y31s 5G,,vivo_global_en
 V2571,mob,vivo,vivo,,,Y31t 5G,,vivo_global_en
 V2574,mob,vivo,vivo,,,Y31t 5G,,vivo_global_en
+V2638,mob,vivo,vivo,,,Y32,,vivo_global_en
+V2641,mob,vivo,vivo,,,Y32,,vivo_global_en
+V2642,mob,vivo,vivo,,,Y32,,vivo_global_en
 V2057,mob,vivo,vivo,,PD2103F,Y33,,vivo_global_en
 V2109-EG,mob,vivo,vivo,,PD2142F,Y33A,,vivo_global_en
 V2109,mob,vivo,vivo,,PD2147F,Y33s,,vivo_global_en
@@ -10174,7 +10189,7 @@ V2584,mob,vivo,vivo,,,Y500,,vivo_global_en
 V2627,mob,vivo,vivo,,,Y500,,vivo_global_en
 V2634,mob,vivo,vivo,,,Y500,,vivo_global_en
 V2635,mob,vivo,vivo,,,Y500,,vivo_global_en
-V2655,mob,vivo,vivo,,,Y600 5G,,vivo_global_en
+V2655,mob,vivo,vivo,,PD2607F,Y600 5G,,vivo_global_en
 I1927,mob,vivo,vivo,,PD1964F,iQOO 3,4G,vivo_global_en
 I1928,mob,vivo,vivo,,PD1955F,iQOO 3 5G,,vivo_global_en
 I2009,mob,vivo,vivo,,PD2049F,iQOO 7,Global,vivo_global_en
@@ -10229,13 +10244,14 @@ J2510,mob,vivo,vivo,,PD2547F,JOVI X300 Ultra,,vivo_global_en
 V2427,mob,vivo,vivo,,PD2437F,JOVI V50,,vivo_global_en
 V2440,mob,vivo,vivo,,PD2447F,JOVI V50 Lite 5G,,vivo_global_en
 J2507,mob,vivo,vivo,,PD2529F,JOVI V70 5G,,vivo_global_en
+J2607,mob,vivo,vivo,,PD2620F,JOVI V80,,vivo_global_en
 J2502,mob,vivo,vivo,,,JOVI T1 5G,,vivo_global_en
 V2425,mob,vivo,vivo,,PD2420F,JOVI Y19s,,vivo_global_en
 V2454,mob,vivo,vivo,,PD2420F,JOVI Y19s,,vivo_global_en
 J2503,mob,vivo,vivo,,PD2510DF,JOVI Y21,,vivo_global_en
 J2609,mob,vivo,vivo,,PD2510DF,JOVI Y21,,vivo_global_en
 J2508,mob,vivo,vivo,,PD2542F,JOVI Y21 5G,,vivo_global_en
-J2601,mob,vivo,vivo,,,JOVI Y21e,,vivo_global_en
+J2601,mob,vivo,vivo,,PD2510DF,JOVI Y21e,,vivo_global_en
 V2445,mob,vivo,vivo,,PD2446F,JOVI Y29,,vivo_global_en
 V2459,mob,vivo,vivo,,PD2443F,JOVI Y29s 5G,,vivo_global_en
 J2506,mob,vivo,vivo,,PD2533HF,JOVI Y31,,vivo_global_en
@@ -11297,6 +11313,7 @@ M2102J20SI,mob,xiaomi,小米,J20S,"vayu, bhima",POCO X3 Pro,印度版,xiaomi
 2412DPC0AI,mob,xiaomi,小米,O10,rodin,POCO X7 Pro,印度版,xiaomi
 2607DPC18G,mob,xiaomi,小米,Q16,"iolite, moscow",POCO X8,国际版,xiaomi
 2607DPC18I,mob,xiaomi,小米,Q16,"iolite, moscow",POCO X8,印度版,xiaomi
+2609CPC5FG,mob,xiaomi,小米,,darwin,POCO X8s,国际版,xiaomi
 2609FPC74I,mob,xiaomi,小米,Q16U,brussels,POCO X8 Power,印度版,xiaomi
 2511FPC34G,mob,xiaomi,小米,P10,klee,POCO X8 Pro,国际版,xiaomi
 2511FPC34I,mob,xiaomi,小米,P10,klee,POCO X8 Pro,印度版,xiaomi
@@ -12609,6 +12626,7 @@ M2102J20SI,mob,xiaomi,Xiaomi,J20S,"vayu, bhima",POCO X3 Pro,India,xiaomi_en
 2412DPC0AI,mob,xiaomi,Xiaomi,O10,rodin,POCO X7 Pro,India,xiaomi_en
 2607DPC18G,mob,xiaomi,Xiaomi,Q16,"iolite, moscow",POCO X8,Global,xiaomi_en
 2607DPC18I,mob,xiaomi,Xiaomi,Q16,"iolite, moscow",POCO X8,India,xiaomi_en
+2609CPC5FG,mob,xiaomi,Xiaomi,,darwin,POCO X8s,Global,xiaomi_en
 2609FPC74I,mob,xiaomi,Xiaomi,Q16U,brussels,POCO X8 Power,India,xiaomi_en
 2511FPC34G,mob,xiaomi,Xiaomi,P10,klee,POCO X8 Pro,Global,xiaomi_en
 2511FPC34I,mob,xiaomi,Xiaomi,P10,klee,POCO X8 Pro,India,xiaomi_en

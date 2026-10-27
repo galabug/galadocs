@@ -82,6 +82,7 @@ function printHelp() {
   - 读取初始文件和目录下全部设备型号转译.YYYY-MM.xlsx作为已知型号
   - 只保留 dtype 为 mob 或 pad 的记录；名称含电脑、笔记本、游戏本、MagicBook、MateBook、翻译机、座舱、汽车、四足机器人的记录过滤掉
   - Apple 使用 code_alias 作为 YC_MODEL，其他品牌使用 model 作为 YC_MODEL
+  - Apple 名称的括号内第 N 代移为系列后的数字，尺寸保留：iPad Pro 3(12.9英寸)
   - YC_MODEL 全局去重，并排除初始文件和历史月份文件中已经存在的型号
   - 品牌优先使用目标已有英文名，其次源英文显示名；指定的六项映射优先
   - 明确统一 华为→HUAWEI、荣耀→HONOR、索尼→Sony、三星→Samsung、小米→Xiaomi、红米→REDMI
