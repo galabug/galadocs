@@ -6,19 +6,97 @@ import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import secrets
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import webbrowser
+import zipfile
 
 
 ROOT = Path(__file__).resolve().parent
 EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 PROFILES = {'smart', 'gentle', 'reference'}
+
+
+class ImportStore:
+    """Browser-selected images are copied only to this local session directory."""
+    MAX_FILE_BYTES = 100 * 1024 * 1024
+    MAX_TOTAL_BYTES = 2 * 1024 * 1024 * 1024
+
+    def __init__(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix='image-compressor-import-')
+        self.root = Path(self.temporary.name)
+        self.sessions = {}
+        self.total_bytes = 0
+        self.lock = threading.Lock()
+
+    def create(self, name: str) -> dict:
+        identifier = secrets.token_urlsafe(24)
+        label = str(name).replace('\\', '/').rsplit('/', 1)[-1].strip()[:120] or '图片'
+        with self.lock:
+            folder = self.root / identifier
+            folder.mkdir()
+            self.sessions[identifier] = {'path': folder, 'label': label, 'files': 0, 'ready': False}
+        return {'import_id': identifier, 'name': label + '-compressed',
+                'parent': str(Path.home() / 'Pictures' / 'ImageCompressor')}
+
+    def write(self, identifier: str, relative: str, stream, size: int) -> None:
+        path = PurePosixPath(relative)
+        if (not relative or '\\' in relative or '\0' in relative or ':' in relative
+                or path.is_absolute() or any(part in {'.', '..'} for part in relative.split('/'))
+                or path.suffix.lower() not in EXTENSIONS):
+            raise ValueError('无效的图片相对路径')
+        if size < 0 or size > self.MAX_FILE_BYTES:
+            raise ValueError('单张图片不能超过 100 MB')
+        with self.lock:
+            session = self.sessions.get(identifier)
+            if not session or session['ready']:
+                raise ValueError('导入会话无效或已完成，请重新选择图片')
+            if self.total_bytes + size > self.MAX_TOTAL_BYTES or session['files'] >= 20000:
+                raise ValueError('导入数量或体积超过本次工具的限制')
+            target = session['path'].joinpath(*path.parts)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            created = False
+            try:
+                with target.open('xb') as file:
+                    created = True
+                    left = size
+                    while left:
+                        chunk = stream.read(min(left, 1024 * 1024))
+                        if not chunk:
+                            raise ValueError('图片传输未完成，请重新选择')
+                        file.write(chunk)
+                        left -= len(chunk)
+            except Exception:
+                if created:
+                    target.unlink()
+                raise
+            self.total_bytes += size
+            session['files'] += 1
+
+    def commit(self, identifier: str) -> dict:
+        with self.lock:
+            session = self.sessions.get(identifier)
+            if not session or not session['files']:
+                raise ValueError('尚未导入可压缩的图片')
+            session['ready'] = True
+            groups = {path.parent for path in session['path'].rglob('*') if path.is_file()}
+            return {'files': session['files'], 'label': session['label'], 'directories': len(groups)}
+
+    def source(self, identifier: str) -> str:
+        with self.lock:
+            session = self.sessions.get(identifier)
+            if not session or not session['ready']:
+                raise ValueError('图片尚未导入完成，请重新选择')
+            return str(session['path'])
+
+    def cleanup(self) -> None:
+        self.temporary.cleanup()
 
 
 def plan_output(source: Path, parent: str, name: str) -> Path:
@@ -68,11 +146,13 @@ class JobManager:
         self.process = None
         self.state = {'status': 'idle', 'message': '选择图片或文件夹，开始压缩',
                       'current': 0, 'total': 0, 'logs': [], 'output': '', 'flat_output': '',
-                      'success': 0, 'failed': 0, 'before': 0, 'after': 0, 'saved_percent': 0}
+                      'success': 0, 'failed': 0, 'before': 0, 'after': 0, 'saved_percent': 0,
+                      'items': []}
 
     def snapshot(self) -> dict:
         with self.lock:
-            return {**self.state, 'logs': list(self.state['logs'])}
+            return {**self.state, 'logs': list(self.state['logs']),
+                    'items': [dict(item) for item in self.state['items']]}
 
     def update(self, **values) -> None:
         with self.lock:
@@ -92,16 +172,21 @@ class JobManager:
             raise ValueError('压缩模式无效')
         if not isinstance(options.get('flat', True), bool):
             raise ValueError('汇总目录选项无效')
+        flat_name = str(options.get('flat_name', '0000')).strip()
+        if not flat_name or flat_name in {'.', '..'} or any(c in flat_name for c in '/\\\0:'):
+            raise ValueError('汇总目录名称不能包含路径分隔符或冒号')
         output = plan_output(source, str(options.get('parent', '')).strip(),
                              str(options.get('name', '')).strip())
+        if flat_name == output.name:
+            raise ValueError('汇总目录与压缩结果目录不能同名')
         with self.lock:
             if self.state['status'] in {'setup', 'running', 'stopping'}:
                 raise ValueError('已有任务正在运行')
             self.cancelled.clear()
-            self.state.update(status='setup', message='正在准备运行环境，首次使用需要联网',
+            self.state.update(status='setup', message='正在准备运行环境：有离线依赖包时从本机安装，否则需要联网',
                               current=0, total=0, logs=[], output=str(output), flat_output='',
-                              success=0, failed=0, before=0, after=0, saved_percent=0)
-        threading.Thread(target=self.run, args=(source, output, profile, options.get('flat', True)),
+                              success=0, failed=0, before=0, after=0, saved_percent=0, items=[])
+        threading.Thread(target=self.run, args=(source, output, profile, options.get('flat', True), flat_name),
                          daemon=True).start()
 
     def log(self, line: str) -> None:
@@ -115,6 +200,9 @@ class JobManager:
             if line.startswith('{'):
                 try:
                     summary = json.loads(line)
+                    if isinstance(summary, dict) and summary.get('event') == 'file':
+                        if len(self.state['items']) < 20000:
+                            self.state['items'].append(summary)
                     if isinstance(summary, dict) and 'output' in summary and 'success' in summary:
                         for key in ('output', 'flat_output', 'success', 'failed', 'before',
                                     'after', 'saved_percent'):
@@ -145,19 +233,19 @@ class JobManager:
             with self.lock:
                 self.process = None
 
-    def run(self, source: Path, output: Path, profile: str, flat: bool) -> None:
+    def run(self, source: Path, output: Path, profile: str, flat: bool, flat_name: str = '0000') -> None:
         try:
             setup = self.execute([sys.executable, '-u', str(ROOT / 'start.py'), '--setup-only'])
             if self.cancelled.is_set():
                 self.update(status='cancelled', message='任务已停止，已完成的图片会保留')
                 return
             if setup:
-                raise RuntimeError('运行环境准备失败，请查看日志；首次安装需要联网')
+                raise RuntimeError('运行环境准备失败，请查看日志；内网电脑请先准备 wheels 离线依赖包')
             python = ROOT / '.runtime' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
             command = [str(python), '-u', str(ROOT / 'compress.py'), str(source),
-                       '-o', str(output), '--profile', profile]
+                       '-o', str(output), '--profile', profile, '--events']
             if flat:
-                command.append('--flat')
+                command.extend(['--flat', '--flat-name', flat_name])
             self.update(status='running', message='正在读取图片并压缩，请稍候')
             code = self.execute(command)
             state = self.snapshot()
@@ -195,7 +283,12 @@ class GuiServer(ThreadingHTTPServer):
     def __init__(self, address):
         self.token = secrets.token_urlsafe(32)
         self.jobs = JobManager()
+        self.imports = ImportStore()
         super().__init__(address, Handler)
+
+    def server_close(self):
+        super().server_close()
+        self.imports.cleanup()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -225,7 +318,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Referrer-Policy', 'no-referrer')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(body)
 
@@ -244,28 +337,94 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(403, {'error': '请从启动器打开完整的界面地址'})
             return
         try:
+            if path.path == '/api/download':
+                from urllib.parse import quote
+                state = self.server.jobs.snapshot()
+                if state['status'] != 'done':
+                    raise ValueError('请等待压缩完成后下载')
+                name = parse_qs(path.query).get('file', [''])[0]
+                if not any(item.get('file') == name and item.get('status') == 'ok' for item in state['items']):
+                    raise ValueError('图片不在本次成功结果中')
+                target = Path(state['output']).joinpath(*PurePosixPath(name).parts).resolve()
+                if Path(state['output']).resolve() not in target.parents or not target.is_file():
+                    raise ValueError('结果文件不存在')
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Length', str(target.stat().st_size))
+                self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + quote(target.name))
+                self.end_headers()
+                with target.open('rb') as file:
+                    import shutil
+                    shutil.copyfileobj(file, self.wfile)
+                return
+            if path.path == '/api/download-all':
+                from urllib.parse import quote
+                state = self.server.jobs.snapshot()
+                if state['status'] != 'done' or not Path(state['output']).is_dir():
+                    raise ValueError('请等待压缩完成后下载')
+                with tempfile.TemporaryFile() as buffer:
+                    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as archive:
+                        for target in sorted(Path(state['output']).rglob('*')):
+                            if target.is_file() and not target.is_symlink():
+                                archive.write(target, str(target.relative_to(state['output'])))
+                    size = buffer.tell()
+                    buffer.seek(0)
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/zip')
+                    self.send_header('Content-Length', str(size))
+                    self.send_header('Content-Disposition', "attachment; filename*=UTF-8''" + quote(Path(state['output']).name + '.zip'))
+                    self.end_headers()
+                    import shutil
+                    shutil.copyfileobj(buffer, self.wfile)
+                return
             if path.path == '/api/state':
                 self.respond(200, self.server.jobs.snapshot())
             elif path.path == '/api/browse':
                 self.respond(200, browse_directory(parse_qs(path.query).get('path', [''])[0]))
+            elif path.path == '/api/source-info':
+                source = Path(parse_qs(path.query).get('path', [''])[0]).expanduser().resolve()
+                if not source.exists():
+                    raise ValueError('输入路径不存在')
+                files = [source] if source.is_file() else source.rglob('*')
+                groups = {file.parent for file in files if file.is_file() and not file.is_symlink()
+                          and file.suffix.lower() in EXTENSIONS}
+                self.respond(200, {'directories': len(groups)})
             else:
                 self.respond(404, {'error': 'Not found'})
         except (OSError, ValueError) as error:
             self.respond(400, {'error': str(error)})
 
     def do_POST(self):
+        from urllib.parse import parse_qs, urlsplit
         if not self.authorized():
             self.respond(403, {'error': 'Unauthorized'})
             return
         try:
             size = int(self.headers.get('Content-Length', 0))
+            route = urlsplit(self.path)
+            if route.path == '/api/import-file':
+                query = parse_qs(route.query)
+                self.server.imports.write(query.get('session', [''])[0],
+                                          query.get('path', [''])[0], self.rfile, size)
+                self.respond(200, {'ok': True})
+                return
             if size < 0 or size > 16384:
                 raise ValueError('请求过大')
             data = json.loads(self.rfile.read(size) or b'{}')
             if not isinstance(data, dict):
                 raise ValueError('无效请求')
             if self.path == '/api/start':
+                if data.get('import_id'):
+                    data['input'] = self.server.imports.source(str(data['import_id']))
+                    if not str(data.get('parent', '')).strip():
+                        data['parent'] = str(Path.home() / 'Pictures' / 'ImageCompressor')
                 self.server.jobs.start(data)
+            elif self.path == '/api/import':
+                self.respond(200, self.server.imports.create(str(data.get('name', '图片'))))
+                return
+            elif self.path == '/api/import-ready':
+                self.respond(200, self.server.imports.commit(str(data.get('import_id', ''))))
+                return
             elif self.path == '/api/cancel':
                 self.server.jobs.cancel()
             elif self.path == '/api/open':

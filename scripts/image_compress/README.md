@@ -16,23 +16,32 @@ Python 3.8 和 3.9+ 自动使用各自兼容的依赖。旧版库输出体积可
 压缩模式、分目录和同级 `0000` 功能保持一致。增强组件无对应平台预编译包时回退基础功能。
 已在 macOS 使用 PyPy 的 Python 2.7.18 实测启动转接和中文路径批量压缩；图形界面实际处理
 两张图片及同级 `0000` 汇总已验证。Windows/Linux 尚未进行真机验证。
-另在 macOS 的 CPython 3.7.17 中通过全部 36 项 Python 测试，并成功批量压缩 8 张样本。
-浏览器代码通过 ES2015 严格语法检查和 5 项禁用新版 API 的界面测试。
+另在 macOS 的 CPython 3.7.17 中通过全部 45 项 Python 测试，并成功批量压缩 8 张样本。
+浏览器代码通过 ES2015 严格语法检查和 10 项禁用新版 API 的界面测试。
 
 默认提供图形界面：双击系统启动脚本，或运行 `python3 start.py`，会在本机浏览器打开工具。
-界面内可浏览文件系统、选择单张图片或整个文件夹、设置输出位置和目录名称、选择压缩模式，
-查看进度、压缩统计及日志，并打开输出/0000 目录。安装和压缩在后台进行，界面保持可用。
+界面文字使用中文，核心布局参考 TinyPNG：点击拖放区选择多张图片，或选择整个文件夹，
+也可直接拖入文件或目录。每张结果显示压缩前大小、压缩后大小和节省比例，支持单张下载、
+全部打包下载，以及打开结果/0000 目录。可设置输出位置、目录名称和压缩模式。
+浏览器选择的图片仅复制到本机临时目录；默认结果保存在用户的 Pictures/ImageCompressor 中，
+可通过“输出到”更改。整个文件夹会保留内部子目录；同时拖入多个文件夹时保留各文件夹名称。
+也可展开“使用本机路径”直接选择路径，此时默认输出到原图旁边。
+仅一个实际包含图片的目录时不生成汇总目录；多个图片目录时出现汇总勾选项。
+汇总目录默认名为 `0000`，可以自行命名；与压缩结果目录同级，同名时自动加编号。
+命令行同样跳过单目录汇总；多目录使用 `--flat-name 自定义名称` 或 `--no-flat` 控制。
 点击“停止任务”会停止后台进程，已完成的文件保留；重试会使用新的输出目录。
 不需要 tkinter 或额外的桌面图形库，图片不会上传到网络服务器。界面只监听本机回环地址，
 每次启动生成独立的访问令牌。点击“退出工具”关闭本机服务，单独关闭浏览器页面不会停止它。
 浏览器脚本按 ES2015 语法交付，无需编译；请求使用 XMLHttpRequest + Promise，不依赖
-async/await、fetch、Array.includes、replaceChildren 或原生 dialog。文件选择窗口使用自定义
-弹层，提供 Escape 关闭、键盘焦点循环和焦点恢复。浏览器仍需支持 ES2015（包括 Promise），
+async/await、fetch、Array.includes、replaceChildren 或原生 dialog。上传使用原生 file / webkitdirectory 控件，
+目录拖入使用 webkitGetAsEntry 并循环读取所有批次；本机路径浏览使用自定义弹层，
+提供 Escape 关闭、键盘焦点循环和焦点恢复。按 Chrome 83 的能力范围实现，尚未在实际 Chrome 83 上运行验证。
+浏览器仍需支持 ES2015（包括 Promise），
 不承诺支持 IE11。布局提供 Flexbox 和静态颜色回退。
 
 整个工具目录可以移动到 Windows、macOS 或 Linux，推荐使用 Python 3.11 / 3.12 作为引擎。
 Windows 双击 `start.bat`，macOS 双击 `start.command`；Linux 执行 `sh start.command`。
-第一次点击“开始压缩”时自动安装依赖，以后在同一电脑同一目录中可离线使用。
+第一次点击“开始压缩”时自动安装依赖；有 `wheels` 目录时只从本地安装，否则联网安装。
 直接指定输入路径仍使用命令行；也可用 `--cli` 进入交互式路径输入。命令行示例：
 
 ```bash
@@ -42,7 +51,7 @@ python3 start.py "/path/to/images" --no-flat
 python3 start.py --cli
 ```
 
-启动器默认保留目录结构，并在输出目录旁增加独立的 `0000` 汇总全部压缩图片。
+启动器默认保留目录结构；多个图片目录且开启汇总时，在输出目录旁增加独立的汇总目录。
 `0000` 与输出目录同级，不放在输出目录内与模块目录同级。已有 `0000` 时使用 `0000-2`、
 `0000-3`，避免混入或覆盖之前的结果。同名图片加稳定的路径摘要，CSV 中汇总路径相对输出
 目录记录，例如 `../0000/icon.png`。自动输出目录已存在时递增编号，显式 `-o` 不覆盖已有目录。
@@ -58,7 +67,7 @@ python3 start.py --cli
 ```
 
 便携包不含 `.venv` / `.runtime`。移动后的 `.runtime` 不可直接跨系统复用，启动器检查
-目录、Python 版本和平台后重建环境，因此移动后首次启动也需要联网安装依赖。
+目录、Python 版本和平台后重建环境；携带匹配目标平台的 `wheels` 目录后，移动也能离线安装。
 程序文件应放在可写目录中。首次自动尝试安装 `imagequant` 和 MozJPEG 无损优化的本机
 二进制包；不支持的平台会回退基础功能，不自动编译 C 代码。没有增强组件时压缩率较低。
 Windows/Linux 已提供入口但尚未真机验证；当前测试平台为 macOS。
@@ -68,6 +77,32 @@ Windows/Linux 已提供入口但尚未真机验证；当前测试平台为 macOS
 ```bash
 python3 scripts/image_compress/package.py /path/to/ImageCompressor-portable.zip
 ```
+
+## 内网与离线安装
+
+内网电脑仍需要已经安装 Python 3.7+，并具备 venv / ensurepip。图片压缩本身完全本地运行。
+离线 ZIP 包附带 `wheels` 目录时，解压后执行 `python3 start.py --offline` 即可；也可直接启动界面。
+`--offline` 禁止依赖安装访问索引，缺少或不匹配的依赖会直接报错，不会回退联网。
+离线安装采用 pip 的 `--no-index --find-links` 方式，并禁用外部 pip 配置，
+参见 [pip 官方说明](https://pip.pypa.io/en/stable/cli/pip_download/)。
+通过 `--wheel-dir /本地依赖目录` 可指定独立的依赖目录（同时启用离线模式）。
+
+在联网电脑为 Linux aarch64、CPython 3.12 准备依赖（glibc 2.17+，不适用于 Alpine / musl）：
+
+```bash
+python3 prepare_offline.py --python-version 3.12 --platform manylinux2014_aarch64 --abi cp312 --implementation cp
+```
+
+把整个工具目录连同 `wheels` 复制进内网，运行：
+
+```bash
+python3 start.py --offline --setup-only
+python3 start.py --offline
+```
+
+也可在与目标电脑系统、架构、Python 小版本相同的联网电脑执行 `python3 prepare_offline.py`。
+依赖包不能跨架构通用；例如 Windows、macOS、ARM32 和其他 Python 小版本需要重新准备。
+源码仓库可使用 `package.py 输出.zip --wheels /依赖目录` 把依赖一起打包。
 
 详细使用说明和常见问题见 `开始使用.txt`。
 

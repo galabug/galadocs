@@ -144,6 +144,8 @@ class CompressionTests(unittest.TestCase):
         source = self.root / 'input'
         (source / '0000').mkdir(parents=True)
         Image.new('RGB', (16, 16), 'pink').save(source / '0000' / 'same.png')
+        (source / 'other').mkdir()
+        Image.new('RGB', (16, 16), 'blue').save(source / 'other' / 'another.png')
         output = self.root / 'output'
         with patch('sys.argv', ['compress.py', str(source), '-o', str(output), '--flat']), contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(), 0)
@@ -152,8 +154,10 @@ class CompressionTests(unittest.TestCase):
         self.assertTrue((output.parent / '0000' / 'same.png').is_file())
 
     def test_existing_sibling_collection_is_preserved_and_numbered(self):
-        source = self.root / 'input.png'
-        Image.new('RGB', (16, 16), 'pink').save(source)
+        source = self.root / 'input'
+        (source / 'group').mkdir(parents=True)
+        Image.new('RGB', (16, 16), 'pink').save(source / 'input.png')
+        Image.new('RGB', (16, 16), 'blue').save(source / 'group' / 'other.png')
         existing = self.root / '0000'
         existing.mkdir()
         (existing / 'keep.txt').write_text('previous run')
@@ -166,15 +170,42 @@ class CompressionTests(unittest.TestCase):
         self.assertIn('../0000-2/', (output / 'compression-report.csv').read_text(encoding='utf-8-sig'))
 
     def test_collection_follows_custom_output_location(self):
-        source = self.root / 'input.png'
-        Image.new('RGB', (16, 16), 'blue').save(source)
+        source = self.root / 'input'
+        (source / 'group').mkdir(parents=True)
+        Image.new('RGB', (16, 16), 'blue').save(source / 'input.png')
+        Image.new('RGB', (16, 16), 'pink').save(source / 'group' / 'other.png')
         output = self.root / '目标位置' / '压缩结果'
         with patch('sys.argv', ['compress.py', str(source), '-o', str(output), '--flat']), contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(main(), 0)
-        copied = output.parent / '0000' / source.name
-        self.assertEqual(copied.read_bytes(), (output / source.name).read_bytes())
+        copied = output.parent / '0000' / 'input.png'
+        self.assertEqual(copied.read_bytes(), (output / 'input.png').read_bytes())
         self.assertFalse((self.root / '0000').exists())
         self.assertFalse((output / '0000').exists())
+
+    def test_single_image_directory_does_not_create_collection(self):
+        source = self.root / 'input'
+        source.mkdir()
+        Image.new('RGB', (16, 16), 'pink').save(source / 'one.png')
+        Image.new('RGB', (16, 16), 'blue').save(source / 'two.png')
+        output = self.root / 'output'
+        with patch('sys.argv', ['compress.py', str(source), '-o', str(output), '--flat']), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(), 0)
+        self.assertFalse((self.root / '0000').exists())
+
+    def test_multiple_directories_optional_custom_collection_name(self):
+        source = self.root / 'input'
+        for group in ('one', 'two'):
+            (source / group).mkdir(parents=True)
+            Image.new('RGB', (16, 16), 'pink').save(source / group / (group + '.png'))
+        for enabled in (False, True):
+            output = self.root / ('enabled' if enabled else 'disabled')
+            command = ['compress.py', str(source), '-o', str(output), '--flat-name', 'all-images']
+            if enabled:
+                command.append('--flat')
+            with patch('sys.argv', command), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(), 0)
+            self.assertEqual((self.root / 'all-images').exists(), enabled)
+        self.assertEqual(len(list((self.root / 'all-images').glob('*.png'))), 2)
 
     def test_compare_recognizes_reference_jpeg_and_duplicate_files(self):
         source = self.root / 'reference.jpg'

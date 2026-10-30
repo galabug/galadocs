@@ -16,6 +16,14 @@ import venv
 ROOT = Path(__file__).resolve().parent
 
 
+def dependency_source():
+    folder = Path(os.environ.get('IMAGE_COMPRESS_WHEEL_DIR', str(ROOT / 'wheels'))).expanduser().resolve()
+    offline = os.environ.get('IMAGE_COMPRESS_OFFLINE') == '1' or folder.is_dir()
+    if offline and not folder.is_dir():
+        raise RuntimeError('离线依赖目录不存在：{}。请先在联网电脑运行 prepare_offline.py，再复制整个工具目录。'.format(folder))
+    return offline, folder
+
+
 def runtime_python() -> Path:
     """Never reuse a virtualenv moved from another directory or computer."""
     if sys.version_info < (3, 7):
@@ -37,7 +45,11 @@ def runtime_python() -> Path:
         if environment.exists():
             shutil.rmtree(environment)
         print('首次运行或程序位置已改变：正在创建本机运行环境……', flush=True)
-        venv.EnvBuilder(with_pip=True).create(environment)
+        try:
+            venv.EnvBuilder(with_pip=True).create(environment)
+        except (OSError, subprocess.CalledProcessError) as error:
+            raise RuntimeError('无法创建 Python 运行环境，请确认此 Python 已安装 venv / ensurepip。'
+                               '内网电脑需要预先准备相应系统组件。原始错误：{}'.format(error))
     requirements = ROOT / 'requirements.txt'
     advanced = ROOT / 'requirements-advanced.txt'
     signature = requirements.read_text(encoding='utf-8') + advanced.read_text(encoding='utf-8')
@@ -45,20 +57,29 @@ def runtime_python() -> Path:
         [str(python), '-c', 'import PIL, numpy'], capture_output=True
     )
     if probe.returncode or installed.get('requirements') != signature or installed.get('identity') != identity:
-        print('正在安装图片处理依赖（首次需要联网）……', flush=True)
+        offline, wheels = dependency_source()
+        install = [str(python), '-m', 'pip', 'install', '--disable-pip-version-check']
+        pip_environment = dict(os.environ)
+        if offline:
+            pip_environment = {key: value for key, value in os.environ.items() if not key.startswith('PIP_')}
+            pip_environment.update(PIP_CONFIG_FILE=os.devnull, PIP_NO_INDEX='1', PIP_DISABLE_PIP_VERSION_CHECK='1')
+            print('正在从本地 wheels 目录安装依赖，全程不访问网络……', flush=True)
+            install.extend(['--no-index', '--find-links', str(wheels), '--only-binary=:all:'])
+        else:
+            print('正在联网安装依赖；内网电脑请先准备 wheels 离线依赖包。', flush=True)
         if sys.version_info < (3, 8):
-            subprocess.run([str(python), '-m', 'pip', 'install', '--disable-pip-version-check',
-                            '--upgrade', 'pip==24.0'], check=True)
-        subprocess.run(
-            [str(python), '-m', 'pip', 'install', '--disable-pip-version-check',
-             '-r', str(requirements)], check=True
-        )
+            subprocess.run(install + ['--upgrade', 'pip==24.0'], check=True, env=pip_environment)
+        try:
+            subprocess.run(install + ['-r', str(requirements)], check=True, env=pip_environment)
+        except subprocess.CalledProcessError:
+            raise RuntimeError('依赖安装失败。{}请确认依赖包与目标电脑的系统、CPU 架构和 Python 小版本匹配。'.format(
+                '当前为离线安装，未尝试联网；' if offline else '内网使用请在联网电脑准备 wheels 目录；'))
         for specification in advanced.read_text(encoding='utf-8').splitlines():
             if not specification.strip() or specification.startswith('#'):
                 continue
             result = subprocess.run(
-                [str(python), '-m', 'pip', 'install', '--disable-pip-version-check',
-                 '--only-binary=:all:', specification],
+                install + ['--only-binary=:all:', specification],
+                env=pip_environment,
             )
             if result.returncode:
                 print(f'此平台无法安装可选组件 {specification}，使用其余可用编码器。', flush=True)
@@ -111,18 +132,25 @@ def main() -> int:
     parser.add_argument('-o', '--output', type=Path)
     parser.add_argument('--profile', choices=('smart', 'reference', 'gentle'), default='smart')
     parser.add_argument('--no-flat', action='store_true', help='Do not create the 0000 directory')
+    parser.add_argument('--flat-name', default='0000', help='Name of the optional collection')
     parser.add_argument('--setup-only', action='store_true', help='Install dependencies and exit')
+    parser.add_argument('--offline', action='store_true', help='Install only from local wheels, never from an index')
+    parser.add_argument('--wheel-dir', type=Path, help='Local offline dependency directory')
     interface = parser.add_mutually_exclusive_group()
     interface.add_argument('--gui', action='store_true', help='Open the graphical interface')
     interface.add_argument('--cli', action='store_true', help='Use interactive command-line input')
     args = parser.parse_args()
+    if args.offline or args.wheel_dir:
+        os.environ['IMAGE_COMPRESS_OFFLINE'] = '1'
+    if args.wheel_dir:
+        os.environ['IMAGE_COMPRESS_WHEEL_DIR'] = str(args.wheel_dir.expanduser().resolve())
     try:
         if args.setup_only:
             runtime_python()
             print('安装完成，可以离线使用。')
             return 0
         if args.gui or (args.input is None and not args.cli):
-            if args.input or args.output or args.no_flat or args.profile != 'smart':
+            if args.input or args.output or args.no_flat or args.profile != 'smart' or args.flat_name != '0000':
                 parser.error('请在图形界面中设置参数，或指定输入路径使用命令行')
             from gui import launch
             return launch()
@@ -143,7 +171,7 @@ def main() -> int:
         command = [str(python), str(ROOT / 'compress.py'), str(source), '-o', str(output),
                    '--profile', args.profile]
         if not args.no_flat:
-            command.append('--flat')
+            command.extend(['--flat', '--flat-name', args.flat_name])
         result = subprocess.run(command)
         print(f'\n输出位置：{output}', flush=True)
         return result.returncode

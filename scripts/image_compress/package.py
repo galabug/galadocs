@@ -11,11 +11,11 @@ FILES = (
     'requirements.txt', 'requirements-advanced.txt', '开始使用.txt', 'README.md',
     'test_compress.py', 'TINYPNG-ANALYSIS.md', 'benchmark.csv',
     'gui.py', 'gui.html', 'gui.js', 'test_gui.py',
-    'test_launcher.py',
+    'test_launcher.py', 'prepare_offline.py',
 )
 
 
-def build_package(target: Path) -> None:
+def build_package(target: Path, wheels: Path = None) -> None:
     root = Path(__file__).resolve().parent
     target.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(target, 'x', compression=zipfile.ZIP_DEFLATED) as archive:
@@ -29,13 +29,21 @@ def build_package(target: Path) -> None:
             info.external_attr = (0o100000 | mode) << 16
             info.compress_type = zipfile.ZIP_DEFLATED
             archive.writestr(info, data)
+        if wheels is not None:
+            wheels = wheels.expanduser().resolve()
+            if not wheels.is_dir() or not list(wheels.glob('*.whl')):
+                raise ValueError('No offline wheels found: ' + str(wheels))
+            for file in sorted(wheels.iterdir()):
+                if file.is_file() and file.suffix in {'.whl', '.json'}:
+                    archive.write(file, 'ImageCompressor/wheels/' + file.name)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--wheels', type=Path, help='Include offline wheel files for the target system')
     args = parser.parse_args()
-    build_package(args.output.expanduser().resolve())
+    build_package(args.output.expanduser().resolve(), args.wheels)
     print(args.output.expanduser().resolve())
 
 

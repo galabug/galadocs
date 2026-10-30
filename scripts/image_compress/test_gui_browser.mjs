@@ -48,7 +48,7 @@ function createInterface() {
       this.headers[name] = value
     }
     send(body) {
-      requests.push({ method: this.method, url: this.url, headers: this.headers, body: body ? JSON.parse(body) : null })
+      requests.push({ method: this.method, url: this.url, headers: this.headers, body: typeof body === 'string' ? JSON.parse(body) : body })
       window.Promise.resolve().then(() => {
         this.status = 200
         let data = { ok: true }
@@ -63,6 +63,7 @@ function createInterface() {
               { name: '子目录', path: '/图片目录/子目录', directory: true },
             ],
           }
+        else if (this.url === '/api/import') data = { import_id: 'local-import', parent: '/输出', name: '图片-compressed' }
         else if (this.url === '/api/start') {
           if (startError) {
             this.status = 400
@@ -169,6 +170,110 @@ test('Escape closes the custom picker and restores focus', async () => {
     ui.document.dispatchEvent(new ui.window.KeyboardEvent('keydown', { key: 'Escape', cancelable: true }))
     assert.equal(ui.document.getElementById('picker').style.display, 'none')
     assert.equal(ui.document.activeElement, button)
+  } finally {
+    ui.close()
+  }
+})
+
+test('native file selection imports binary images and submits the local session', async () => {
+  const ui = createInterface()
+  try {
+    await settle()
+    const file = new ui.window.File(['sample'], '中文.png', { type: 'image/png' })
+    const input = ui.document.getElementById('file-input')
+    assert.equal(input.type, 'file')
+    assert.equal(ui.document.querySelector('label[for="file-input"]').getAttribute('for'), input.id)
+    Object.defineProperty(input, 'files', { value: [file] })
+    input.dispatchEvent(new ui.window.Event('change'))
+    await settle()
+    assert.ok(ui.requests.some((request) => request.url.indexOf('/api/import-file?') === 0 && request.body === file))
+    assert.match(ui.document.getElementById('selection').textContent, /已选择 1 张/)
+    ui.document.getElementById('compress-form').dispatchEvent(new ui.window.Event('submit', { cancelable: true }))
+    await settle()
+    assert.equal(ui.requests.find((request) => request.url === '/api/start').body.import_id, 'local-import')
+  } finally {
+    ui.close()
+  }
+})
+
+test('folder selection preserves nested paths without duplicating the selected root', async () => {
+  const ui = createInterface()
+  try {
+    await settle()
+    const file = new ui.window.File(['sample'], '图片.png')
+    Object.defineProperty(file, 'webkitRelativePath', { value: '产品/横幅/图片.png' })
+    const input = ui.document.getElementById('folder-input')
+    assert.ok(input.hasAttribute('webkitdirectory'))
+    Object.defineProperty(input, 'files', { value: [file] })
+    input.dispatchEvent(new ui.window.Event('change'))
+    await settle()
+    const request = ui.requests.find((item) => item.url.indexOf('/api/import-file?') === 0)
+    assert.equal(new URL(request.url, 'http://localhost').searchParams.get('path'), '横幅/图片.png')
+    assert.equal(ui.document.getElementById('flat-options').style.display, 'none')
+  } finally {
+    ui.close()
+  }
+})
+
+test('directory drop reads all entry batches including more than 100 files', async () => {
+  const ui = createInterface()
+  try {
+    await settle()
+    const entries = Array.from({ length: 105 }, (_, index) => ({ isFile: true, name: index + '.png', file: (resolve) => resolve(new ui.window.File(['x'], index + '.png')) }))
+    let batch = 0
+    const folder = { name: '相册', isDirectory: true, createReader: () => ({ readEntries: (resolve) => resolve(batch++ === 0 ? entries.slice(0, 100) : batch === 2 ? entries.slice(100) : []) }) }
+    const event = new ui.window.Event('drop', { cancelable: true, bubbles: true })
+    Object.defineProperty(event, 'dataTransfer', { value: { items: [{ webkitGetAsEntry: () => folder }], files: [] } })
+    ui.document.getElementById('drop-zone').dispatchEvent(event)
+    await settle()
+    assert.equal(ui.requests.filter((item) => item.url.indexOf('/api/import-file?') === 0).length, 105)
+    assert.match(ui.document.getElementById('selection').textContent, /已选择 105 张/)
+  } finally {
+    ui.close()
+  }
+})
+
+test('per-image results display before size, after size and savings safely in Chinese', async () => {
+  const ui = createInterface()
+  try {
+    await settle()
+    ui.setState({ status: 'done', success: 1, before: 2000, after: 500, saved_percent: 75, output: '/结果', items: [{ file: '横幅/<img>.png', status: 'ok', before: 2000, after: 500, saved_percent: 75 }] })
+    ui.poll()
+    await settle()
+    const results = ui.document.getElementById('file-results')
+    assert.match(results.textContent, /压缩前 2.0 KB/)
+    assert.match(results.textContent, /压缩后 500 B/)
+    assert.match(results.textContent, /减少 75%/)
+    assert.equal(results.querySelectorAll('img').length, 0)
+    assert.equal(ui.document.getElementById('download-all').disabled, false)
+  } finally {
+    ui.close()
+  }
+})
+
+test('multiple image folders expose an optional collection with a custom name', async () => {
+  const ui = createInterface()
+  try {
+    await settle()
+    const files = ['root/one/one.png', 'root/two/two.png'].map((relative) => {
+      const file = new ui.window.File(['image'], relative.split('/').pop())
+      Object.defineProperty(file, 'webkitRelativePath', { value: relative })
+      return file
+    })
+    const input = ui.document.getElementById('folder-input')
+    Object.defineProperty(input, 'files', { value: files })
+    input.dispatchEvent(new ui.window.Event('change'))
+    await settle()
+    assert.equal(ui.document.getElementById('flat-options').style.display, 'flex')
+    ui.document.getElementById('flat-name').value = 'all-images'
+    ui.document.getElementById('flat').click()
+    assert.equal(ui.document.getElementById('flat-name').disabled, true)
+    ui.document.getElementById('flat').click()
+    ui.document.getElementById('compress-form').dispatchEvent(new ui.window.Event('submit', { cancelable: true }))
+    await settle()
+    const start = ui.requests.find((request) => request.url === '/api/start')
+    assert.equal(start.body.flat, true)
+    assert.equal(start.body.flat_name, 'all-images')
   } finally {
     ui.close()
   }

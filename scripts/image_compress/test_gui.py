@@ -1,3 +1,5 @@
+import io
+import zipfile
 import json
 from pathlib import Path
 import tempfile
@@ -7,7 +9,7 @@ from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from gui import GuiServer, JobManager, browse_directory, plan_output
+from gui import GuiServer, ImportStore, JobManager, browse_directory, plan_output
 import start_modern as start
 
 
@@ -45,7 +47,12 @@ class GuiTests(unittest.TestCase):
         jobs.log('[2/4] 卡片/图片.png: 60%')
         jobs.log(json.dumps({'output': '/result', 'flat_output': '/0000', 'success': 4,
                              'failed': 0, 'before': 1000, 'after': 400, 'saved_percent': 60}))
+        jobs.log(json.dumps({'event': 'file', 'file': '卡片/图片.png', 'status': 'ok',
+                             'before': 1000, 'after': 400, 'saved_percent': 60}))
         state = jobs.snapshot()
+        self.assertEqual(state['items'][0]['after'], 400)
+        state['items'][0]['after'] = 999
+        self.assertEqual(jobs.snapshot()['items'][0]['after'], 400)
         self.assertEqual((state['current'], state['total']), (2, 4))
         self.assertEqual(state['flat_output'], '/0000')
         self.assertEqual(state['saved_percent'], 60)
@@ -89,6 +96,28 @@ class GuiTests(unittest.TestCase):
         jobs.update(status='running')
         with self.assertRaises(ValueError):
             jobs.start({'input': str(source)})
+
+    def test_import_preserves_paths_and_rejects_partial_and_unsafe_uploads(self):
+        store = ImportStore()
+        try:
+            identifier = store.create('相册')['import_id']
+            for path in ('../escape.png', '/absolute.png', 'a/../b.png', 'a\\b.png', 'a.txt'):
+                with self.assertRaises(ValueError):
+                    store.write(identifier, path, io.BytesIO(b'x'), 1)
+            with self.assertRaises(ValueError):
+                store.source(identifier)
+            with self.assertRaises(ValueError):
+                store.write(identifier, 'partial.png', io.BytesIO(b'x'), 2)
+            self.assertFalse((store.root / identifier / 'partial.png').exists())
+            store.write(identifier, '横幅/图片.png', io.BytesIO(b'image'), 5)
+            with self.assertRaises(FileExistsError):
+                store.write(identifier, '横幅/图片.png', io.BytesIO(b'x'), 1)
+            self.assertEqual(store.commit(identifier)['files'], 1)
+            self.assertEqual((Path(store.source(identifier)) / '横幅/图片.png').read_bytes(), b'image')
+            with self.assertRaises(ValueError):
+                store.write(identifier, 'late.png', io.BytesIO(b'x'), 1)
+        finally:
+            store.cleanup()
 
     def test_default_launcher_opens_gui(self):
         with patch('sys.argv', ['start.py']), patch('gui.launch', return_value=0) as launch:
@@ -142,6 +171,44 @@ class GuiHttpTests(unittest.TestCase):
                 self.request('/api/start', authenticated=False, data={'input': '/tmp'})
             self.assertEqual(result.exception.code, 403)
             start_job.assert_not_called()
+
+    def test_browser_import_api_and_start_use_local_staging(self):
+        from urllib.parse import urlencode
+        with self.request('/api/import', data={'name': '产品'}) as response:
+            session = json.load(response)
+        route = '/api/import-file?' + urlencode({'session': session['import_id'], 'path': '横幅/图片.png'})
+        request = Request(self.url + route, data=b'image', headers={'Authorization': 'Bearer ' + self.server.token})
+        with urlopen(request, timeout=5) as response:
+            self.assertEqual(response.status, 200)
+        with self.request('/api/import-ready', data={'import_id': session['import_id']}) as response:
+            self.assertEqual(json.load(response)['files'], 1)
+        with patch.object(self.server.jobs, 'start') as start_job:
+            with self.request('/api/start', data={'import_id': session['import_id']}) as response:
+                self.assertEqual(response.status, 200)
+            options = start_job.call_args[0][0]
+            self.assertEqual((Path(options['input']) / '横幅/图片.png').read_bytes(), b'image')
+            self.assertTrue(options['parent'].endswith('ImageCompressor'))
+
+    def test_download_single_zip_and_invalid_paths(self):
+        from urllib.parse import quote
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder)
+            (output / '横幅').mkdir()
+            (output / '横幅/图片.png').write_bytes(b'compressed')
+            state = {'status': 'done', 'output': folder, 'items': [
+                {'file': '横幅/图片.png', 'status': 'ok'}]}
+            with patch.object(self.server.jobs, 'snapshot', return_value=state):
+                with self.request('/api/download?file=' + quote('横幅/图片.png')) as response:
+                    self.assertEqual(response.read(), b'compressed')
+                    self.assertIn('filename*=', response.headers['Content-Disposition'])
+                with self.request('/api/download-all') as response:
+                    with zipfile.ZipFile(io.BytesIO(response.read())) as archive:
+                        self.assertEqual(archive.read('横幅/图片.png'), b'compressed')
+                for path in ('../escape.png', 'missing.png'):
+                    with self.assertRaises(HTTPError):
+                        self.request('/api/download?file=' + quote(path))
+                with self.assertRaises(HTTPError):
+                    self.request('/api/download-all', authenticated=False)
 
     def test_invalid_job_request_is_reported_without_stopping_server(self):
         with self.assertRaises(HTTPError) as result:

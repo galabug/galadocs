@@ -331,11 +331,11 @@ def remove_if_present(path: Path) -> None:
         pass
 
 
-def create_flat_directory(output: Path) -> Path:
+def create_flat_directory(output: Path, label: str = '0000') -> Path:
     """Create a collection beside the output, without mixing previous runs."""
     number = 1
     while True:
-        name = '0000' if number == 1 else f'0000-{number}'
+        name = label if number == 1 else f'{label}-{number}'
         candidate = output.parent / name
         try:
             candidate.mkdir()
@@ -350,6 +350,8 @@ def main() -> int:
     parser.add_argument('-o', '--output', type=Path, help='New output directory; keeps subdirectories')
     parser.add_argument('--profile', choices=PROFILES, default='smart')
     parser.add_argument('--flat', action='store_true', help='Also copy results into a sibling 0000 directory')
+    parser.add_argument('--flat-name', default='0000', help='Name of the optional sibling collection')
+    parser.add_argument('--events', action='store_true', help='Emit per-file JSON progress for the GUI')
     args = parser.parse_args()
     source = args.input.expanduser().resolve()
     if not source.exists():
@@ -368,13 +370,19 @@ def main() -> int:
     )
     if not files:
         parser.error('No supported images found')
+    label = args.flat_name.strip()
+    if not label or label in {'.', '..'} or any(c in label for c in '/\\\0:'):
+        parser.error('汇总目录名称无效')
+    if label == output.name:
+        parser.error('汇总目录与压缩结果目录不能同名')
     output.mkdir(parents=True)
-    flat_output = create_flat_directory(output) if args.flat else None
+    multiple_directories = len({path.parent for path in files}) > 1
+    flat_output = create_flat_directory(output, label) if args.flat and multiple_directories else None
     counts = Counter(path.name for path in files)
     used_names = {path.name for path in files if counts[path.name] == 1}
     rows = []
     for index, path in enumerate(files, 1):
-        row = {'file': str(path.relative_to(base)), 'status': 'ok', 'original_bytes': 0,
+        row = {'file': path.relative_to(base).as_posix(), 'status': 'ok', 'original_bytes': 0,
                'compressed_bytes': 0, 'saved_percent': 0, 'method': '', 'block_ssim': '',
                'psnr_db': '', 'flat_file': '', 'error': ''}
         try:
@@ -399,6 +407,11 @@ def main() -> int:
             row.update(status='error', error=str(error))
         rows.append(row)
         print(f'[{index}/{len(files)}] {row["file"]}: {row["saved_percent"]}% {row["error"]}', flush=True)
+        if args.events:
+            print(json.dumps({'event': 'file', 'index': index, 'file': row['file'],
+                              'status': row['status'], 'before': row['original_bytes'],
+                              'after': row['compressed_bytes'], 'saved_percent': row['saved_percent'],
+                              'error': row['error']}, ensure_ascii=False), flush=True)
     report = io.StringIO(newline='')
     writer = csv.DictWriter(report, fieldnames=list(rows[0]))
     writer.writeheader()

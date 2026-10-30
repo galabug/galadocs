@@ -477,8 +477,201 @@
           flex-wrap: wrap;
         }
       }
+
+      body {
+        background: #f5f7f2;
+      }
+      main {
+        max-width: 1120px;
+      }
+      .mark,
+      .primary,
+      progress::-webkit-progress-value {
+        background: #79ad2b;
+        border-color: #79ad2b;
+      }
+      .primary:hover {
+        background: #658f25;
+      }
+      .card {
+        border-radius: 13px;
+      }
+      .drop-zone {
+        position: relative;
+        text-align: center;
+        color: white;
+        border: 2px dashed #e4efdc;
+        border-radius: 12px;
+        padding: 28px 20px 20px;
+        background: radial-gradient(ellipse at top left, #7b9562, transparent 70%), linear-gradient(120deg, #425744, #283c34);
+        outline: 12px solid #e7ecdf;
+        margin: 12px 12px 28px;
+      }
+      .drop-zone.dragging {
+        background: #466b32;
+        border-color: #b4ef68;
+      }
+      .drop-label {
+        cursor: pointer;
+        position: relative;
+        display: block;
+        margin: 0;
+        padding-bottom: 18px;
+      }
+      .drop-label strong {
+        display: block;
+        font-size: 25px;
+        margin: 15px 0 4px;
+      }
+      .drop-label span {
+        display: block;
+        font-size: 15px;
+        font-weight: normal;
+      }
+      .drop-zone p {
+        color: #e1e9d8;
+        font-size: 12px;
+        margin-top: 13px;
+      }
+      .drop-label input,
+      .folder-choice input {
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        font-size: 100px;
+      }
+      .folder-choice {
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #c4d9ad;
+        padding: 7px 19px;
+        border-radius: 7px;
+        color: #fff;
+        cursor: pointer;
+        margin: 0;
+      }
+      .drop-label:focus-within,
+      .folder-choice:focus-within {
+        outline: 3px solid #b4ef68;
+      }
+      .selection {
+        padding: 10px 0;
+        color: #45642d;
+        font-weight: 600;
+      }
+      .local-path {
+        margin: 4px 0 20px;
+        font-size: 14px;
+      }
+      .local-path .field {
+        margin-top: 14px;
+      }
+      .boot-warning {
+        background: #fff5d9;
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+      }
+      .summary-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #3e414d;
+        color: white;
+        padding: 24px;
+        margin: -27px -27px 24px;
+        border-radius: 13px 13px 0 0;
+      }
+      .summary-bar h2 {
+        color: #99ce42;
+        font-size: 25px;
+        margin: 0 0 4px;
+      }
+      .summary-bar span {
+        font-size: 13px;
+      }
+      .summary-bar button {
+        margin-left: 16px;
+      }
+      .file-results {
+        margin-top: 10px;
+      }
+      .file-row {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #e5e9e0;
+        padding: 15px 0;
+      }
+      .file-icon {
+        color: #307c9c;
+        background: #e9f4f5;
+        border-radius: 8px;
+        font-size: 11px;
+        padding: 12px 7px;
+        margin-right: 15px;
+        min-width: 48px;
+        text-align: center;
+      }
+      .file-name {
+        flex: 1;
+        min-width: 0;
+        word-wrap: break-word;
+      }
+      .file-name strong,
+      .file-size span {
+        display: block;
+      }
+      .file-name small,
+      .file-size span {
+        color: #69766a;
+        font-size: 12px;
+      }
+      .file-size {
+        margin: 0 20px;
+        text-align: right;
+      }
+      .file-size b {
+        color: #618e26;
+      }
+      .file-row button {
+        color: #227aa2;
+        background: #f1f8fb;
+        border: 0;
+      }
+      .file-error {
+        color: #a33a28;
+      }
+      @media (max-width: 680px) {
+        .summary-bar {
+          margin: -20px -20px 20px;
+          padding: 20px;
+          flex-wrap: wrap;
+        }
+        .summary-bar h2 {
+          font-size: 20px;
+        }
+        .summary-bar button {
+          margin: 15px 0 0;
+        }
+        .drop-label strong {
+          font-size: 21px;
+        }
+        .file-row {
+          flex-wrap: wrap;
+        }
+        .file-size {
+          margin: 0 10px;
+        }
+      }
     </style>
-    <script src="/gui.js" defer></script>
+    <script src="gui.js" defer></script>
   </head>
   <body>
     <main>
@@ -493,14 +686,34 @@
         <span class="badge">● 本机处理</span>
       </header>
       <section class="card">
-        <h2><span class="step">01</span>选择图片与输出位置</h2>
+        <div id="boot-warning" class="boot-warning">正在连接本机工具… 若页面无响应，请运行 start.command（苹果电脑）或 start.bat（Windows），不要直接打开此网页文件。</div>
+        <noscript>请启用浏览器的 JavaScript 后使用图片选择和压缩功能。</noscript>
         <form id="compress-form">
           <fieldset id="settings">
-            <div class="field">
-              <label for="source">输入图片或文件夹</label>
-              <div class="path-row"><input id="source" type="text" placeholder="选择一张图片，或包含图片的文件夹" required /><button id="browse-source" type="button">浏览…</button></div>
-              <div class="hint">支持 JPG、PNG、WebP、GIF；文件夹会包含其子目录。</div>
+            <div id="drop-zone" class="drop-zone">
+              <label class="drop-label" for="file-input">
+                <svg width="88" height="78" viewBox="0 0 88 78" aria-hidden="true">
+                  <path d="M8 22 44 5 80 22 44 40Z" fill="#7ac4eb" />
+                  <path d="M8 22 44 40 44 74 8 56Z" fill="#2782bb" />
+                  <path d="M44 40 80 22 80 56 44 74Z" fill="#165584" />
+                  <path d="M44 16v32m-12-12 12 12 12-12" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <strong>将图片或文件夹拖到这里</strong>
+                <span>也可以点击此处选择图片 · 支持多选</span>
+                <input id="file-input" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.gif" />
+              </label>
+              <label class="folder-choice" for="folder-input">选择整个文件夹<input id="folder-input" type="file" webkitdirectory directory multiple /></label>
+              <p>支持 JPG、PNG、WebP、GIF · 图片仅在本机处理</p>
             </div>
+            <div id="selection" class="selection" role="status">尚未选择图片</div>
+            <details class="local-path">
+              <summary>或使用本机路径选择图片与文件夹</summary>
+              <div class="field">
+                <label for="source">输入图片或文件夹</label>
+                <div class="path-row"><input id="source" type="text" placeholder="选择一张图片，或包含图片的文件夹" /><button id="browse-source" type="button">浏览…</button></div>
+                <div class="hint">支持 JPG、PNG、WebP、GIF；文件夹会包含其子目录。</div>
+              </div>
+            </details>
             <div class="field">
               <label for="parent">输出到</label>
               <div class="path-row"><input id="parent" type="text" placeholder="默认放在输入目录旁边" /><button id="browse-parent" type="button">浏览…</button></div>
@@ -519,19 +732,29 @@
                 </select>
               </div>
             </div>
-            <div class="check">
+            <div id="flat-options" class="check" style="display: none">
               <input id="flat" type="checkbox" checked />
               <div>
-                <label for="flat">同时生成 0000 图片汇总目录</label>
-                <div class="hint">0000 与压缩结果目录同级；已有时使用 0000-2。模块分目录照常保留。</div>
+                <label for="flat">同时生成图片汇总目录</label>
+                <label for="flat-name" class="hint">汇总目录名称</label>
+                <input id="flat-name" type="text" value="0000" placeholder="默认：0000" />
+                <div class="hint">汇总目录与压缩结果目录同级；同名时自动加编号。原有分目录照常保留。</div>
               </div>
             </div>
+            <p id="flat-hint" class="hint">只有一个图片目录时不生成汇总目录；多个目录时可选择生成。</p>
           </fieldset>
           <div class="actions"><button id="start" class="primary" type="submit">开始压缩</button><button id="cancel" class="danger" type="button" disabled>停止任务</button><span class="hint">保留原图 · 保持尺寸与格式</span></div>
         </form>
         <div id="notice" class="notice" role="alert"></div>
       </section>
       <section id="progress-section" class="card" aria-label="压缩进度">
+        <div class="summary-bar">
+          <div>
+            <h2 id="savings-title">让图片更轻，让画质依然清晰</h2>
+            <span id="summary-text">选择图片，开始本机压缩</span>
+          </div>
+          <button id="download-all" class="primary" type="button" disabled>下载全部图片</button>
+        </div>
         <div class="status-head">
           <h2><span class="step">02</span>压缩进度</h2>
           <span id="counter">等待开始</span>
@@ -544,13 +767,14 @@
           <div class="stat"><span>压缩后</span><strong id="after">—</strong></div>
           <div class="stat"><span>体积减少</span><strong id="saved" class="green">—</strong></div>
         </div>
+        <div id="file-results" class="file-results" aria-label="每张图片的压缩结果"></div>
         <div id="results" class="result">
           <div class="result-row">
             <div><b>压缩结果</b><small id="output-path"></small></div>
             <button id="open-output" type="button">打开结果目录</button>
           </div>
           <div id="flat-result" class="result-row">
-            <div><b>0000 汇总</b><small id="flat-path"></small></div>
+            <div><b>图片汇总</b><small id="flat-path"></small></div>
             <button id="open-flat" type="button">打开汇总目录</button>
           </div>
         </div>
