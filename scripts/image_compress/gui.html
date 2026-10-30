@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>图片压缩 · Python 便携工具</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172439;
+        --muted: #67768b;
+        --line: #dde5ee;
+        --blue: #2865db;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f3f6fa;
+        color: #172439;
+        color: var(--ink);
+        font:
+          14px/1.6 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          'Microsoft YaHei',
+          sans-serif;
+      }
+      main {
+        max-width: 1080px;
+        margin: 42px auto;
+        padding: 0 24px 40px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        gap: 20px;
+      }
+      .brand {
+        display: flex;
+        gap: 0;
+        align-items: center;
+      }
+      .mark {
+        margin-right: 15px;
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        color: white;
+        background: #2865db;
+        background: var(--blue);
+        font-size: 25px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 27px;
+        letter-spacing: -0.5px;
+      }
+      p {
+        margin: 4px 0 0;
+        color: #67768b;
+        color: var(--muted);
+      }
+      .badge {
+        background: #e4f3ed;
+        color: #26745a;
+        border-radius: 20px;
+        padding: 6px 13px;
+        white-space: nowrap;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 27px;
+        margin-top: 18px;
+        box-shadow: 0 4px 20px #192d4b04;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 0 0 21px;
+      }
+      .step {
+        display: inline-grid;
+        place-items: center;
+        background: #edf3ff;
+        color: #2865db;
+        color: var(--blue);
+        border-radius: 7px;
+        width: 27px;
+        height: 27px;
+        margin-right: 9px;
+        font-size: 13px;
+      }
+      fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0;
+        min-width: 0;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 0 0 7px;
+      }
+      input[type='text'],
+      select {
+        width: 100%;
+        border: 1px solid #ccd7e5;
+        border-radius: 9px;
+        padding: 11px 12px;
+        background: white;
+        color: #172439;
+        color: var(--ink);
+        font: inherit;
+        min-width: 0;
+      }
+      input:focus,
+      select:focus,
+      button:focus {
+        outline: 3px solid #2865db25;
+        border-color: #2865db;
+        border-color: var(--blue);
+      }
+      button {
+        border: 1px solid #ccd7e5;
+        border-radius: 9px;
+        padding: 10px 17px;
+        color: #172439;
+        color: var(--ink);
+        background: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:hover {
+        background: #f2f6fc;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .primary {
+        background: #2865db;
+        background: var(--blue);
+        border-color: #2865db;
+        border-color: var(--blue);
+        color: white;
+        min-width: 145px;
+      }
+      .primary:hover {
+        background: #1e54bf;
+      }
+      .danger {
+        color: #a53030;
+      }
+      .columns > .field {
+        flex: 1;
+        margin-right: 20px;
+      }
+      .columns > .field:last-child {
+        margin-right: 0;
+      }
+      .field {
+        margin-bottom: 20px;
+      }
+      .path-row {
+        display: flex;
+        gap: 0;
+      }
+      .path-row > button {
+        margin-left: 9px;
+      }
+      .actions > button + button {
+        margin-left: 10px;
+      }
+      .browse-actions > button + button {
+        margin-left: 8px;
+      }
+      .result-row > button {
+        margin-left: 14px;
+      }
+      .columns {
+        display: flex;
+      }
+      .hint {
+        color: #67768b;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 6px;
+        font-weight: normal;
+      }
+      .check {
+        display: flex;
+        align-items: flex-start;
+        gap: 0;
+        padding: 15px;
+        background: #f5f8fd;
+        border-radius: 10px;
+        margin-top: 2px;
+      }
+      .check input {
+        margin-right: 9px;
+        margin: 5px 9px 0 0;
+        accent-color: #2865db;
+        color: var(--blue);
+      }
+      .check label {
+        margin: 0;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-top: 23px;
+      }
+      .actions .hint {
+        margin-left: auto;
+      }
+      .notice {
+        display: none;
+        background: #fff0ed;
+        border: 1px solid #f0c4bb;
+        color: #a33a28;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-top: 15px;
+        white-space: pre-wrap;
+      }
+      .status-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0;
+      }
+      .status-head h2 {
+        margin-bottom: 0;
+      }
+      #counter {
+        color: #67768b;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      #message {
+        color: #67768b;
+        color: var(--muted);
+        margin: 14px 0 12px;
+        overflow-wrap: anywhere;
+      }
+      progress {
+        display: block;
+        appearance: none;
+        border: 0;
+        width: 100%;
+        height: 9px;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #edf1f7;
+        accent-color: #2865db;
+        color: var(--blue);
+      }
+      progress::-webkit-progress-bar {
+        background: #edf1f7;
+        border-radius: 6px;
+      }
+      progress::-webkit-progress-value {
+        background: #2865db;
+        background: var(--blue);
+        border-radius: 6px;
+        transition: width 0.25s;
+      }
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -16px;
+        margin-top: 23px;
+      }
+      .stat {
+        flex: 1;
+        min-width: 130px;
+        margin: 0 16px 12px 0;
+        padding: 14px 17px;
+        border: 1px solid #e5ebf2;
+        border-radius: 10px;
+      }
+      .stat span {
+        display: block;
+        color: #67768b;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .stat strong {
+        display: block;
+        font-size: 23px;
+        font-weight: 650;
+        margin-top: 4px;
+        font-variant-numeric: tabular-nums;
+      }
+      .green {
+        color: #248160;
+      }
+      .result {
+        display: none;
+        border-top: 1px solid var(--line);
+        margin-top: 22px;
+        padding-top: 19px;
+      }
+      .result-row {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin: 9px 0;
+      }
+      .result-row div {
+        flex: 1;
+        min-width: 0;
+      }
+      .result-row small {
+        color: #67768b;
+        color: var(--muted);
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      details {
+        margin-top: 20px;
+        color: #67768b;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      summary {
+        cursor: pointer;
+      }
+      pre {
+        max-height: 200px;
+        overflow: auto;
+        white-space: pre-wrap;
+        background: #f6f8fb;
+        padding: 14px;
+        border-radius: 8px;
+        color: #52627a;
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 22px;
+        color: #67768b;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      footer button {
+        font-size: 12px;
+        padding: 6px 12px;
+        background: transparent;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: rgba(23, 36, 57, 0.4);
+      }
+      .picker-panel {
+        width: 720px;
+        max-width: 95vw;
+        max-height: 85vh;
+        overflow: auto;
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+        color: #172439;
+        color: var(--ink);
+      }
+      .dialog-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .dialog-head h2 {
+        margin: 0;
+      }
+      .browse-actions {
+        display: flex;
+        gap: 0;
+        margin: 12px 0;
+      }
+      #entries {
+        height: 300px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+      }
+      .entry {
+        display: flex;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        border-radius: 0;
+        border-bottom: 1px solid #edf1f7;
+        font-weight: 400;
+        gap: 0;
+        padding: 11px 15px;
+      }
+      .entry span:first-child {
+        margin-right: 12px;
+        color: #2865db;
+        color: var(--blue);
+        min-width: 21px;
+      }
+      .entry span:last-child {
+        overflow-wrap: anywhere;
+        white-space: normal;
+      }
+      .dialog-bottom {
+        display: flex;
+        justify-content: space-between;
+        gap: 0;
+        margin-top: 17px;
+      }
+      #browse-error {
+        color: #a33a28;
+        margin: 9px 0;
+      }
+      .empty {
+        padding: 35px 15px;
+        color: #67768b;
+        color: var(--muted);
+        text-align: center;
+      }
+      @media (max-width: 680px) {
+        main {
+          margin-top: 22px;
+          padding: 0 13px 25px;
+        }
+        .card {
+          padding: 20px;
+        }
+        .columns {
+          display: block;
+        }
+        .columns > .field {
+          margin-right: 0;
+        }
+        .stat {
+          flex: none;
+          width: calc(50% - 16px);
+          min-width: 0;
+        }
+        .actions {
+          flex-wrap: wrap;
+        }
+        .actions .hint {
+          width: 100%;
+          margin-left: 0;
+        }
+        header {
+          align-items: flex-start;
+        }
+        .badge {
+          font-size: 11px;
+        }
+        .result-row {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+    <script src="/gui.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand">
+          <div class="mark" aria-hidden="true">▧</div>
+          <div>
+            <h1>图片压缩</h1>
+            <p>批量优化图片，保留原有目录结构</p>
+          </div>
+        </div>
+        <span class="badge">● 本机处理</span>
+      </header>
+      <section class="card">
+        <h2><span class="step">01</span>选择图片与输出位置</h2>
+        <form id="compress-form">
+          <fieldset id="settings">
+            <div class="field">
+              <label for="source">输入图片或文件夹</label>
+              <div class="path-row"><input id="source" type="text" placeholder="选择一张图片，或包含图片的文件夹" required /><button id="browse-source" type="button">浏览…</button></div>
+              <div class="hint">支持 JPG、PNG、WebP、GIF；文件夹会包含其子目录。</div>
+            </div>
+            <div class="field">
+              <label for="parent">输出到</label>
+              <div class="path-row"><input id="parent" type="text" placeholder="默认放在输入目录旁边" /><button id="browse-parent" type="button">浏览…</button></div>
+            </div>
+            <div class="columns">
+              <div class="field">
+                <label for="name">结果目录名称</label><input id="name" type="text" placeholder="自动使用 名称-compressed" />
+                <div class="hint">已有同名目录时自动加编号。</div>
+              </div>
+              <div class="field">
+                <label for="profile">压缩模式</label
+                ><select id="profile">
+                  <option value="smart">智能压缩 · 自动平衡画质和体积</option>
+                  <option value="gentle">画质优先 · 更保守的画质门槛</option>
+                  <option value="reference">参考参数 · JPEG 从质量 65 起尝试</option>
+                </select>
+              </div>
+            </div>
+            <div class="check">
+              <input id="flat" type="checkbox" checked />
+              <div>
+                <label for="flat">同时生成 0000 图片汇总目录</label>
+                <div class="hint">0000 与压缩结果目录同级；已有时使用 0000-2。模块分目录照常保留。</div>
+              </div>
+            </div>
+          </fieldset>
+          <div class="actions"><button id="start" class="primary" type="submit">开始压缩</button><button id="cancel" class="danger" type="button" disabled>停止任务</button><span class="hint">保留原图 · 保持尺寸与格式</span></div>
+        </form>
+        <div id="notice" class="notice" role="alert"></div>
+      </section>
+      <section id="progress-section" class="card" aria-label="压缩进度">
+        <div class="status-head">
+          <h2><span class="step">02</span>压缩进度</h2>
+          <span id="counter">等待开始</span>
+        </div>
+        <div id="message" role="status">选择图片或文件夹，开始压缩</div>
+        <progress id="progress" max="100" value="0" aria-label="图片处理进度"></progress>
+        <div class="stats">
+          <div class="stat"><span>成功 / 失败</span><strong id="count">—</strong></div>
+          <div class="stat"><span>压缩前</span><strong id="before">—</strong></div>
+          <div class="stat"><span>压缩后</span><strong id="after">—</strong></div>
+          <div class="stat"><span>体积减少</span><strong id="saved" class="green">—</strong></div>
+        </div>
+        <div id="results" class="result">
+          <div class="result-row">
+            <div><b>压缩结果</b><small id="output-path"></small></div>
+            <button id="open-output" type="button">打开结果目录</button>
+          </div>
+          <div id="flat-result" class="result-row">
+            <div><b>0000 汇总</b><small id="flat-path"></small></div>
+            <button id="open-flat" type="button">打开汇总目录</button>
+          </div>
+        </div>
+        <details>
+          <summary>查看运行日志</summary>
+          <pre id="logs">尚无日志</pre>
+        </details>
+      </section>
+      <footer><span>Python 便携工具 · 图片仅在本机处理</span><button id="exit" type="button">退出工具</button></footer>
+      <div id="picker" class="modal" aria-hidden="true">
+        <section class="picker-panel" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+          <div class="dialog-head">
+            <h2 id="picker-title">选择图片或文件夹</h2>
+            <button id="close-picker" type="button" aria-label="关闭文件浏览器">关闭</button>
+          </div>
+          <div class="path-row"><input id="browse-path" type="text" aria-label="浏览的文件夹路径" /><button id="go" type="button">前往</button></div>
+          <div class="browse-actions"><button id="up" type="button">↑ 上一级</button><button id="home" type="button">主目录</button></div>
+          <div id="browse-error" role="alert"></div>
+          <div id="entries"></div>
+          <div class="dialog-bottom"><span id="browse-hint" class="hint">点击文件夹进入，点击图片选择。</span><button id="select-folder" class="primary" type="button">选择此文件夹</button></div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

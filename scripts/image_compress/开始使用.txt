@@ -1,0 +1,80 @@
+便携图片压缩工具
+================
+
+一、准备
+1. 把 ZIP 解压到任意可写目录，整个目录可复制到其他电脑。
+2. start.py 启动入口兼容 Python 2.7，会自动调用已安装的 Python 3.7+。
+   压缩引擎和图形界面仍需 Python 3，推荐 3.11 / 3.12；仅有 Python 2.7 不能完成压缩。
+   如未自动找到，可设置 IMAGE_COMPRESS_PYTHON3 为 Python 3 可执行文件完整路径。
+   Python 3.7 会自动选择 Pillow 9.5.0 / NumPy 1.21.6 等兼容依赖，图形界面和 0000 功能保留。
+   官方下载：https://www.python.org/downloads/
+   Windows 安装时勾选 “Add Python to PATH”。
+3. 第一次使用需要联网下载 Pillow、NumPy，并尝试安装 imagequant 和 MozJPEG 优化组件。
+   组件无对应平台的预编译包时保留基础功能，以后在同一位置可以离线使用。
+   不需要 Node.js、npm、当前项目或其他开发环境。
+
+二、日常使用
+Windows：双击 start.bat，也可以把单张图片或图片文件夹拖到 start.bat 上。
+macOS：双击 start.command，在本机浏览器打开图形界面。
+       如果系统不允许直接双击，可在终端执行：sh /工具目录/start.command
+Linux：在终端执行：sh /工具目录/start.command
+三个系统不带参数启动时都会打开图形界面；也可运行 python3 start.py --gui。
+界面里点击“浏览…”选择图片或文件夹、选择输出位置、压缩模式，然后点击“开始压缩”。
+进度、统计和日志会实时更新，完成后可直接打开结果目录或 0000 目录。
+工具在本机运行，不需要 tkinter，图片不会上传到远程服务器。
+浏览器界面的 JavaScript 兼容 ES2015，不依赖 async/await、fetch 或原生 dialog。
+需要支持 ES2015 和 Promise 的浏览器，不承诺支持 IE11。
+请通过“退出工具”结束本机服务，单独关闭网页不会停止正在进行的任务。
+停止任务会保留已经完成的文件，重试时会使用新的输出目录。
+
+三、压缩结果
+默认在输入旁创建“名称-compressed”目录，已存在时自动加编号。
+输出目录内保留原来的分目录；在输出目录旁额外创建独立的 0000 目录汇总所有压缩图片。
+0000 与输出目录同级，不放在输出目录内与模块目录同级。例如：
+  目标位置/
+    图片-compressed/
+      Banner/
+      anniMenu/
+      compression-report.csv
+    0000/
+      所有压缩图片
+已有 0000 时使用 0000-2、0000-3，避免覆盖或混合旧结果。
+同名图片在 0000 中会加稳定的路径摘要，避免覆盖；对应关系见 compression-report.csv。
+原图不会修改。尺寸、文件格式保留；GIF 优化必须保持逐帧画面、时长和循环一致。
+新版默认 smart 模式，按图片逐张选择 JPEG 质量、PNG 颜色数和抖动参数。
+smart 允许半透明边缘轻微变化，并以黑白两种背景检查画质；gentle 模式要求透明通道完全一致。
+smart 会将有效色彩配置转换到 sRGB 并移除非显示元数据，保留 EXIF 方向。
+gentle/reference 则保留 ICC 配置和 JPEG EXIF。
+不满足画质条件或体积没有变小时，复制原文件。输出大小取决于图片本身。
+0000 是副本，会额外占用一份空间；命令行加 --no-flat 可关闭。
+CSV 的 flat_file 路径相对输出目录，例如 ../0000/图片.png。
+
+四、命令行
+在工具目录中运行（Windows 可将 python3 改为 py -3）：
+  python3 start.py "/图片目录"
+  python3 start.py "/单张图片.jpg" -o "/新的输出目录"
+  python3 start.py "/图片目录" --profile gentle
+  python3 start.py "/图片目录" --no-flat
+  python3 start.py --setup-only
+  python3 start.py --cli
+
+gentle 使用更保守的画质门槛，通常体积较大。详细实测及实现原理见 TINYPNG-ANALYSIS.md。
+这是根据公开原理和多样本测试开发的离线近似方案，不能保证复现 TinyPNG 的私有编码器。
+比较两张图片的编码和画质：
+  macOS/Linux：.runtime/bin/python compare.py "/原图.jpg" "/压缩图.jpg"
+  Windows：.runtime\Scripts\python.exe compare.py "原图.jpg" "压缩图.jpg"
+
+五、移动和兼容性
+程序源码在 Windows、macOS 和 Linux 共用；首次运行自动安装本机的依赖。
+.runtime 是自动生成的本机环境。复制到其他电脑或更换目录时可先删除它，程序会重建。
+离线电脑必须先在同一电脑、同一目录完成一次 --setup-only 安装。
+不能把一个系统的 .runtime 当作另一个系统的运行环境。
+若 Linux 缺少 venv/pip，需先使用该系统的软件包管理器安装 python3-venv/python3-pip。
+Python 安装没有 tkinter 时也能用浏览器图形界面；无桌面环境可直接使用命令行。
+
+PNG、GIF 还可选用系统中的 pngquant、oxipng、gifsicle，未安装也能运行。
+没有 gifsicle 时 GIF 直接保留原文件；动态 PNG/WebP 也直接保留，避免丢失动画。
+没有 imagequant 时部分 PNG 的压缩率较低。详细算法见 README.md。
+
+这是跨系统的 Python 源码工具，不是无需 Python 的 EXE / APP。
+当前实际验证环境为 macOS；Windows/Linux 提供对应启动入口，尚未进行真机验证。
