@@ -33,6 +33,9 @@ const build = spawnSync('npm', ['run', 'build'], {
 })
 if (build.status !== 0) process.exit(build.status ?? 1)
 
+// 查询接口在构建服务进程中运行，源码随页面发布保留在服务根目录。
+fs.copyFileSync(path.join(project, 'scripts/anomaly/api.cjs'), path.join(server, 'review-anomaly.cjs'))
+
 const output = path.join(project, 'dist')
 if (fs.existsSync(path.join(output, 'a'))) throw new Error('构建产物含有原始日行情，停止部署')
 const html = fs.readFileSync(path.join(output, 'index.html'), 'utf8')
