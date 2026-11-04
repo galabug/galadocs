@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import ReviewOverview from '@/components/review/ReviewOverview.vue'
 import { formatValue, parseReview, parseSourceHealth, sourceLabel } from '@/utils/review'
 import type { Metric, ReviewData, ReviewDay, SourceHealth } from '@/types/review'
@@ -185,6 +186,7 @@ onMounted(async () => {
             <p>从涨跌停、连板与次日溢价，回看市场情绪的变化。</p>
           </div>
           <div class="heading-actions">
+            <RouterLink class="secondary anomaly-entry" to="/anomaly">Δ 异动计算器</RouterLink>
             <button class="secondary" @click="showGuide = !showGuide">⚙ 采集配置</button><button class="primary" :disabled="loading" @click="load()"><span>↻</span> {{ loading ? '读取中…' : '刷新数据' }}</button>
           </div>
         </div>
@@ -697,6 +699,13 @@ h1 {
 .heading-actions {
   display: flex;
   gap: 9px;
+  flex-wrap: wrap;
+}
+.anomaly-entry {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
 }
 .primary,
 .secondary {
